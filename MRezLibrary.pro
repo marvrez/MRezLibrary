@@ -1,12 +1,14 @@
-QT += core
-QT -= gui
-
-CONFIG += c++11
-
-TARGET = MRezLibrary
-CONFIG += console
+TEMPLATE = app
+CONFIG += c++14
 CONFIG -= app_bundle
 
-TEMPLATE = app
+INCLUDEPATH += ./include/humanize
+QMAKE_CXXFLAGS += -stdlib=libc++
 
 SOURCES += main.cpp
+
+HEADERS += \
+    include/numbers.h \
+    include/format_int.h \
+    include/humanize/format_int.h \
+    include/humanize/numbers.h

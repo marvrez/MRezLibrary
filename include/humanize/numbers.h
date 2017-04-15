@@ -29,17 +29,18 @@ NumberWords numWords[] = {{19,"exa"}, {16,"peta"}, {13, "tera"}, {10, "giga"}, {
 
 namespace numbers {
 
+namespace {
+
 template <typename Numeral>
 void numberToChars(char* str, Numeral x) {
-    std::cout << format_int<Numeral>::format() << "\n";
     std::sprintf(str, format_int<Numeral>::format(), x);
 }
 
 template<bool isSigned>
-class checkSigned { };
+class CheckSigned { };
 
 template<>
-class checkSigned<true>
+class CheckSigned<false>
 {
 public:
     template<typename Numeral>
@@ -56,37 +57,47 @@ public:
     static void setSuffix(char* finalStr, Numeral num, unsigned int decimals, const char* numStr,
                           int idx, const NumberWords& numStruct) {
         if (decimals > 0)
-            std::sprintf(finalStr, "%.*s.%.*s%c", idx, numStr, decimals,
+            std::sprintf(finalStr, "%.*s.%.*s %s", idx, numStr, decimals,
                          numStr + idx, numStruct.suffix.c_str());
         else
-            std::sprintf(finalStr, "%.*s%c", idx, numStr, numStruct.suffix.c_str());
+            std::sprintf(finalStr, "%.*s %s", idx, numStr, numStruct.suffix.c_str());
     }
 };
 
 template<>
-class checkSigned<false>
+class CheckSigned<true>
 {
 public:
     template<typename Numeral>
     static void setSuffix(char* finalStr, Numeral num, unsigned int decimals, const char* numStr,
                           int idx, const Number& numStruct) {
-        if (decimals > 0)
-            std::sprintf(finalStr, "%.*s.%.*s%c", idx, numStr, decimals,
-                         numStr + idx, numStruct.suffix);
-        else
-            std::sprintf(finalStr, "%.*s%c", idx, numStr, numStruct.suffix);
+        if (num < 0) {
+             if (decimals > 0)
+                 std::sprintf(finalStr, "-%.*s.%.*s%c", idx, numStr,
+                              decimals, numStr + idx, numStruct.suffix);
+             else
+                 std::sprintf(finalStr, "-%.*s%c", idx, numStr, numStruct.suffix);
+         }
+         else
+            CheckSigned<false>::setSuffix(finalStr, num, decimals, numStr, idx, numStruct);
     }
 
     template<typename Numeral>
     static void setSuffix(char* finalStr, Numeral num, unsigned int decimals, const char* numStr,
                           int idx, const NumberWords& numStruct) {
-        if (decimals > 0)
-            std::sprintf(finalStr, "%.*s.%.*s%c", idx, numStr, decimals,
-                         numStr + idx, numStruct.suffix);
-        else
-            std::sprintf(finalStr, "%.*s%c", idx, numStr, numStruct.suffix);
+        if (num < 0) {
+             if (decimals > 0)
+                 std::sprintf(finalStr, "-%.*s.%.*s %s", idx, numStr,
+                              decimals, numStr + idx, numStruct.suffix.c_str());
+             else
+                 std::sprintf(finalStr, "-%.*s %s", idx, numStr, numStruct.suffix.c_str());
+         }
+         else
+            CheckSigned<false>::setSuffix(finalStr, num, decimals, numStr, idx, numStruct);
     }
 };
+
+} //anon namespace
 
 
 template<typename Numeral>
@@ -101,13 +112,12 @@ std::string getCompactName(const Numeral num, unsigned int decimals = 0) {
 
     numberToChars(absStr, absNum);
     int absNumLength = static_cast<int>(strlen(absStr));
-    std::cout << absNumLength << "\n";
 
     for(const auto& numStruct : numWords) {
         if(absNumLength >= numStruct.len) {
             int idx = absNumLength - numStruct.len + 1;
             char finalStr[maxSize];
-            checkSigned<std::is_signed<Numeral>::value>::setSuffix(finalStr, num, decimals, absStr, idx, numStruct);
+            CheckSigned<std::is_signed<Numeral>::value>::setSuffix(finalStr, num, decimals, absStr, idx, numStruct);
             return finalStr;
         }
     }
@@ -126,13 +136,12 @@ std::string getCompactSymbol(const Numeral num, unsigned int decimals = 0) {
 
     numberToChars(absStr, absNum);
     int absNumLength = static_cast<int>(strlen(absStr));
-    std::cout << absNumLength << "\n";
 
     for(const auto& numStruct : nums) {
         if(absNumLength >= numStruct.len) {
             int idx = absNumLength - numStruct.len + 1;
             char finalStr[maxSize];
-            checkSigned<std::is_signed<Numeral>::value>::setSuffix(finalStr, num, decimals, absStr, idx, numStruct);
+            CheckSigned<std::is_signed<Numeral>::value>::setSuffix(finalStr, num, decimals, absStr, idx, numStruct);
             return finalStr;
         }
     }

@@ -1,8 +1,11 @@
-#include <QCoreApplication>
+#include "numbers.h"
 
-int main(int argc, char *argv[])
+#include <iostream>
+#include <assert.h>
+using namespace std;
+
+int main()
 {
-    QCoreApplication a(argc, argv);
-
-    return a.exec();
+    std::cout << humanize::numbers::getCompactName(-1000,310) << "\n";
+    return 0;
 }
