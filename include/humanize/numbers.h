@@ -19,15 +19,14 @@ struct NumberWords {
 };
 
 namespace humanize {
-std::string num_words[] = { "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+static const char* num_words[] = { "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
                             "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
                             "eighteen", "nineteen" };
-std::string ten_words[]  = {"", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety" };
-std::string orders_of_magnitude_words[] = { "", " thousand", " million", " billion", " trillion", " quadrillion", " quintillion" };
-Number nums[] = {{19,'E'}, {16,'P'}, {13, 'T'}, {10, 'G'}, {7, 'M'}, {4, 'K'}};
-NumberWords numWords[] = {{19,"exa"}, {16,"peta"}, {13, "tera"}, {10, "giga"}, {7, "mega"}, {4, "kilo"}};
+static const char* ten_words[]  = {"", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety" };
+static const char* orders_of_magnitude_words[] = { "", " thousand", " million", " billion", " trillion", " quadrillion", " quintillion" };
+static Number nums[] = {{19,'E'}, {16,'P'}, {13, 'T'}, {10, 'G'}, {7, 'M'}, {4, 'K'}};
+static NumberWords numWords[] = {{19,"exa"}, {16,"peta"}, {13, "tera"}, {10, "giga"}, {7, "mega"}, {4, "kilo"}};
 
-namespace numbers {
 
 namespace {
 
@@ -99,6 +98,7 @@ public:
 
 } //anon namespace
 
+namespace numbers {
 
 template<typename Numeral>
 std::string getCompactName(const Numeral num, unsigned int decimals = 0) {
