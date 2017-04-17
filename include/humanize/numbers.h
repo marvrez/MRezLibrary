@@ -2,7 +2,6 @@
 #define NUMBERS_H
 #include "format_int.h"
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <type_traits>

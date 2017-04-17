@@ -6,16 +6,16 @@
 #include <chrono>
 
 //constants
-#define SECONDS_PER_YEAR = 31536000;
-#define SECONDS_PER_MONTH = 2628000;
-#define SECONDS_PER_DAY = 86400;
-#define SECONDS_PER_HOUR = 3600;
-#define SECONDS_PER_MINUTE = 60;
+constexpr int SECONDS_PER_YEAR = 31536000;
+constexpr int SECONDS_PER_MONTH = 2628000;
+constexpr int SECONDS_PER_DAY = 86400;
+constexpr int SECONDS_PER_HOUR = 3600;
+constexpr int SECONDS_PER_MINUTE = 60;
 
-#define DAYS_PER_MONTH = 30.41666666666667;
-#define MONTHS_PER_YAER = 12;
-#define HOURS_PER_DAY = 24;
-#define MINUTES_PER_HOUR = 60;
+constexpr double DAYS_PER_MONTH = 30.41666666666667;
+constexpr int MONTHS_PER_YEAR = 12;
+constexpr int HOURS_PER_DAY = 24;
+constexpr int MINUTES_PER_HOUR = 60;
 
 namespace humanize {
 enum SuffixType {SHORT, LONG};
@@ -73,7 +73,108 @@ struct TimeData {
     }
 };
 
+template <class Rep, class Period, class = std::enable_if_t<
+   std::chrono::duration<Rep, Period>::min() < std::chrono::duration<Rep, Period>::zero()>>
+constexpr std::chrono::duration<Rep, Period> abs(std::chrono::duration<Rep, Period> d)
+{
+    return d >= d.zero() ? d : -d;
+}
+
 namespace time {
+
+struct TimeResult {
+    std::string str;
+    int64_t secsDiff;
+
+    enum {
+        PAST,
+        PRESENT,
+        FUTURE,
+    } resultType;
+
+
+    bool operator==(const TimeResult& rhs) const {
+        return this->secsDiff == rhs.secsDiff &&
+               this->resultType == rhs.resultType;
+    }
+
+    bool operator!=(const TimeResult& rhs) const {
+        return !(*this == rhs);
+    }
+};
+
+template<typename Clock, class Duration = typename Clock::duration>
+TimeResult relativeTime(const std::chrono::time_point<Clock, Duration>& start,
+                        const std::chrono::time_point<Clock, Duration>& stop,
+                        SuffixType sType = SuffixType::LONG, unsigned int maxPoints = 2)
+{
+    TimeResult res;
+
+    auto diff = abs(std::chrono::duration_cast<std::chrono::seconds>(start-stop));
+
+    int64_t secsDiff = diff.count();
+
+    res.secsDiff = secsDiff;
+
+    if(secsDiff == 0) {
+        res.str = "present";
+        res.resultType = TimeResult::PRESENT;
+        return res;
+    }
+
+    if(secsDiff < 0) res.resultType = TimeResult::FUTURE;
+    else res.resultType = TimeResult::PAST;
+
+    TimeData td[] = {
+    TimeData(static_cast<uint16_t>(trunc(secsDiff / SECONDS_PER_YEAR)),
+             0),
+    TimeData(static_cast<uint16_t>(trunc(secsDiff / SECONDS_PER_MONTH % MONTHS_PER_YEAR)),
+             1),
+    TimeData(static_cast<uint16_t>(trunc(fmod(secsDiff / SECONDS_PER_DAY, DAYS_PER_MONTH))),
+             2),
+    TimeData(static_cast<uint16_t>(trunc(secsDiff / SECONDS_PER_HOUR % HOURS_PER_DAY)),
+             3),
+    TimeData(static_cast<uint16_t>(trunc(secsDiff / SECONDS_PER_MINUTE % MINUTES_PER_HOUR)),
+             4),
+    TimeData(static_cast<uint16_t>(secsDiff % SECONDS_PER_MINUTE),
+             5),
+    };
+
+    char str[1024];
+    unsigned int len = 0, pointsUsed = 0;
+    for (const TimeData& curTimeData : td) {
+        if (pointsUsed >= maxPoints) break;
+
+        if (curTimeData.amount == 0) continue;
+
+        if (pointsUsed > 0) {
+            if (sType == SuffixType::LONG) {
+                if (pointsUsed == maxPoints - 1)
+                    strcpy(str + len, ", and "), len += 6;
+                else
+                    strcpy(str + len, ", "), len += 2;
+            }
+        }
+
+        if (sType == SuffixType::LONG) //spaces between amount and suffix if long suffixtype
+            len += std::sprintf(str + len, "%d %s", curTimeData.amount,
+                                curTimeData.getSuffix(sType));
+        else //else no spaces
+            len += std::sprintf(str + len, "%d%s", curTimeData.amount,
+                                curTimeData.getSuffix(sType));
+        pointsUsed++;
+    }
+    res.str = str;
+
+    return res;
+}
+
+template <class Clock>
+TimeResult relativeTime(const std::chrono::time_point<Clock>& stop,
+             SuffixType sType = SuffixType::LONG, unsigned int maxPoints = 2)
+{
+    return relativeTime(Clock::now(), stop, sType, maxPoints);
+}
 
 }
 
