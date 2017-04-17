@@ -169,14 +169,49 @@ TimeResult relativeTime(const std::chrono::time_point<Clock, Duration>& start,
     return res;
 }
 
-template <class Clock>
+template <typename Clock>
 TimeResult relativeTime(const std::chrono::time_point<Clock>& stop,
              SuffixType sType = SuffixType::LONG, unsigned int maxPoints = 2)
 {
     return relativeTime(Clock::now(), stop, sType, maxPoints);
 }
 
+template <typename Duration, typename Clock = std::chrono::system_clock,
+          typename = typename std::enable_if<std::chrono::__is_duration<Duration>::value>::type>
+TimeResult relativeTime(const Duration &duration, SuffixType sType = SuffixType::LONG,
+                        unsigned int maxPoints = 2)
+{
+    auto t1 = std::chrono::time_point_cast<Duration>(Clock::now());
+    auto t2 = t1 + duration;
+
+    return relativeTime(t1, t2, sType, maxPoints);
 }
 
+template <typename Clock, typename Duration = typename Clock::duration>
+std::string diffTime(const std::chrono::time_point<Clock, Duration>& start,
+   const std::chrono::time_point<Clock, Duration>& stop,
+   SuffixType sType = SuffixType::LONG, unsigned int maxPoints = 2)
+{
+    return relativeTime(start, stop, sType, maxPoints).str;
+}
+
+template <typename Clock>
+std::string diffTime(const std::chrono::time_point<Clock>& stop,
+                     SuffixType sType = SuffixType::LONG, unsigned int maxPoints = 2)
+{
+    return relativeTime(Clock::now(), stop, sType, maxPoints).str;
+}
+
+template<typename Duration, typename Clock = std::chrono::system_clock,
+         typename = typename std::enable_if<std::chrono::__is_duration<Duration>::value>::type>
+std::string diffTime(const Duration& duration, SuffixType sType = SuffixType::LONG,
+                     unsigned int maxPoints = 2)
+{
+    auto t1 = std::chrono::time_point_cast<Duration>(Clock::now());
+    auto t2 = t1 + duration;
+    return diffTime(t1, t2, sType, maxPoints);
+}
+
+} //namespace time
 } //namespace humanize
 #endif // TIME_H
