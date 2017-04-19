@@ -7,9 +7,6 @@
 #include <ostream>
 #include <stdexcept>
 
-//TOOD: create matrix class, etc..
-
-
 /////////////////////DECLARATIONS/////////////////////////////
 
 template<typename T>
@@ -38,7 +35,7 @@ public:
 template<typename T>
 class Matrix2 {
 private:
-    T data[9];
+    T data[4];
 public:
     Matrix2();
     Matrix2(int i); //identity
@@ -97,16 +94,100 @@ Matrix2<T> operator*(const Matrix2<T>& m1, float f);
 template<typename T>
 Matrix2<T> operator*(float f, const Matrix2<T>& m1);
 
-/*
+template<typename T>
 class Point3 {
+private:
+    float len;
+    union {
+        struct{T x, y, z;};
+        T data[3];
+    };
+public:
+    Point3();
+    Point3(T x, T y, T z);
 
+    void normalize();
+    float length();
+
+    T get(unsigned int n) const throw (std::out_of_range);
+
+    T& operator[](unsigned int n) throw (std::out_of_range);
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Point3<U>& p);
 };
 
-using Vector3 = Point3;
+template<typename T>
+using Vector3 = Point3<T>;
 
+template<typename T>
 class Matrix3 {
+private:
+    T data[9];
+public:
+    Matrix3();
+    Matrix3(int i);
+    Matrix3(int i, float theta);
+    Matrix3(int i, float arg1, float arg2);
+    Matrix3(int i, const Vector3<T>& v, float arg1);
+    Matrix3(T a1, T a2, T a3,
+            T a4, T a5, T a6,
+            T a7, T a8, T a9);
 
+
+    T& operator[](int n) throw (std::out_of_range);
+    float det() const;
+    T get(int x, int y) const throw (std::out_of_range);
+
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Matrix3<U>& m);
 };
+
+template<typename T>
+Vector3<T> cross(const Vector3<T>& v1, const Vector3<T>& v2);
+
+template<typename T>
+T operator*(const Vector3<T>& v1, const Vector3<T>& v2);
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, float f);
+
+template<typename T>
+Vector3<T> operator*(float f, const Vector3<T>& v);
+
+template<typename T>
+Vector3<T> operator+(const Vector3<T>& v1, const Vector3<T>& v2);
+
+template<typename T>
+Vector3<T> operator-(const Vector3<T>& v1, const Vector3<T>& v2);
+
+template<typename T>
+Vector3<T> operator/(const Vector3<T>& v, float f);
+
+template<typename T>
+Vector3<T> operator*(const Matrix3<T>& m, const Vector3<T>& v);
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, const Matrix3<T>& m);
+
+template<typename T>
+Matrix3<T> operator+(const Matrix3<T>& m1, const Matrix3<T>& m2);
+
+template<typename T>
+Matrix3<T> operator*(const Matrix3<T>& m, float f);
+
+template<typename T>
+Matrix3<T> operator*(float f, const Matrix3<T>& m);
+
+template<typename T>
+Matrix3<T> operator/(const Matrix3<T>& m, float f);
+
+template<typename T>
+Matrix3<T> operator~(const Matrix3<T>& m);
+
+template<typename T>
+Matrix3<T> operator*(const Matrix3<T>& m1, const Matrix3<T>& m2);
+
+/*
 
 class Matrix4 {
 
