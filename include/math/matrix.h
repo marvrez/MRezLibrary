@@ -391,8 +391,7 @@ Matrix2<T> operator*(float f, const Matrix2<T>& m1) {
 //Point3/Matrix3 implementations
 
 template<typename T>
-Point3<T>::Point3() : len(0), x(0), y(0), z(0)
-{ }
+Point3<T>::Point3() : x(0.0), y(0.0), z(0.0), len(0.0) { }
 
 template<typename T>
 Point3<T>::Point3(T x, T y, T z) : x(x), y(y), z(z), len(-1) { }
@@ -455,6 +454,7 @@ T& Point3<T>::operator[](unsigned int n) throw (std::out_of_range) {
 template<typename U>
 std::ostream& operator<<(std::ostream& os, const Point3<U>& p) {
     os << "[" << p.x << ", " << p.y << ", " << p.z << "]";
+    return os;
 }
 
 
@@ -566,6 +566,101 @@ std::ostream& operator<<(std::ostream& os, const Matrix3<U>& m) {
     os << "["<< m.data[3] << ", " << m.data[4] << ", " << m.data[5] << "]" << "\n";
     os << "["<< m.data[6] << ", " << m.data[7] << ", " << m.data[8] << "]" << "\n";
     return os;
+}
+
+template<typename T>
+Vector3<T> cross(const Vector3<T>& v1, const Vector3<T>& v2) {
+    return Vector3<T>(v1.get(1)*v2.get(2) - v1.get(2)*v2.get(1),
+                   v1.get(2)*v2.get(0) - v1.get(0)*v2.get(2),
+                   v1.get(0)*v2.get(1) - v1.get(1)*v2.get(0));
+}
+
+template<typename T>
+T operator*(const Vector3<T>& v1, const Vector3<T>& v2) {
+    return v1.get(0)*v2.get(0) + v1.get(1)*v2.get(1) + v1.get(2)*v2.get(2);
+}
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, float f) {
+    return Vector3<T>(v.get(0)*f, v.get(1)*f, v.get(2)*f);
+}
+
+template<typename T>
+Vector3<T> operator*(float f, const Vector3<T>& v) {
+    return Vector3<T>(v.get(0)*f, v.get(1)*f, v.get(2)*f);
+}
+
+template<typename T>
+Vector3<T> operator+(const Vector3<T>& v1, const Vector3<T>& v2) {
+    return Vector3<T>(v1.get(0) + v2.get(0), v1.get(1) + v2.get(1), v1.get(2) + v2.get(2));
+}
+
+template<typename T>
+Vector3<T> operator-(const Vector3<T>& v1, const Vector3<T>& v2) {
+    return Vector3<T>(v1.get(0) - v2.get(0), v1.get(1) - v2.get(1), v1.get(2) - v2.get(2));
+}
+
+template<typename T>
+Vector3<T> operator/(const Vector3<T>& v, float f) {
+    return Vector3<T>(v.get(0)/f, v.get(1)/f, v.get(2)/f);
+}
+
+template<typename T>
+Vector3<T> operator*(const Matrix3<T>& m, const Vector3<T>& v) {
+    return Vector3<T>(m.get(0, 0)*v.get(0) + m.get(1, 0)*v.get(1) + m.get(2, 0)*v.get(2),
+                      m.get(0, 1)*v.get(0) + m.get(1, 1)*v.get(1) + m.get(2, 1)*v.get(2),
+                      m.get(0, 2)*v.get(0) + m.get(1, 2)*v.get(1) + m.get(2, 2)*v.get(2));
+}
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, const Matrix3<T>& m) {
+    return Vector3<T>(m.get(0, 0)*v.get(0) + m.get(0, 1)*v.get(1) + m.get(0, 2)*v.get(2),
+                      m.get(1, 0)*v.get(0) + m.get(1, 1)*v.get(1) + m.get(1, 2)*v.get(2),
+                      m.get(2, 0)*v.get(0) + m.get(2, 1)*v.get(1) + m.get(2, 2)*v.get(2));
+}
+
+template<typename T>
+Matrix3<T> operator+(const Matrix3<T>& m1, const Matrix3<T>& m2) {
+    return Matrix3<T>(m1.get(0, 0) + m2.get(0, 0), m1.get(1, 0) + m2.get(1, 0), m1.get(2, 0) + m2.get(2, 0),
+                      m1.get(0, 1) + m2.get(0, 1), m1.get(1, 1) + m2.get(1, 1), m1.get(2, 1) + m2.get(2, 1),
+                      m1.get(0, 2) + m2.get(0, 2), m1.get(1, 2) + m2.get(1, 2), m1.get(2, 2) + m2.get(2, 2));
+}
+
+template<typename T>
+Matrix3<T> operator*(const Matrix3<T>& m, float f) {
+    return Matrix3<T>(m.get(0, 0)*f, m.get(1, 0)*f, m.get(2, 0)*f,
+                      m.get(0, 1)*f, m.get(1, 1)*f, m.get(2, 1)*f,
+                      m.get(0, 2)*f, m.get(1, 2)*f, m.get(2, 2)*f);
+}
+
+template<typename T>
+Matrix3<T> operator*(float f, const Matrix3<T>& m) {
+    return Matrix3<T>(m.get(0, 0)*f, m.get(1, 0)*f, m.get(2, 0)*f,
+                      m.get(0, 1)*f, m.get(1, 1)*f, m.get(2, 1)*f,
+                      m.get(0, 2)*f, m.get(1, 2)*f, m.get(2, 2)*f);
+}
+
+template<typename T>
+Matrix3<T> operator/(const Matrix3<T>& m, float f) {
+    return Matrix3<T>(m.get(0, 0)/f, m.get(1, 0)/f, m.get(2, 0)/f,
+                      m.get(0, 1)/f, m.get(1, 1)/f, m.get(2, 1)/f,
+                      m.get(0, 2)/f, m.get(1, 2)/f, m.get(2, 2)/f);
+
+}
+
+template<typename T>
+Matrix3<T> operator*(const Matrix3<T>& m1, const Matrix3<T>& m2) {
+    return Matrix3<T>(m1.get(0, 0)*m2.get(0, 0) + m1.get(1, 0)*m2.get(0, 1) + m1.get(2, 0)*m2.get(0, 2),
+                      m1.get(0, 0)*m2.get(1, 0) + m1.get(1, 0)*m2.get(1, 1) + m1.get(2, 0)*m2.get(1, 2),
+                      m1.get(0, 0)*m2.get(2, 0) + m1.get(1, 0)*m2.get(2, 1) + m1.get(2, 0)*m2.get(2, 2),
+
+                      m1.get(0, 1)*m2.get(0, 0) + m1.get(1, 1)*m2.get(0, 1) + m1.get(2, 1)*m2.get(0, 2),
+                      m1.get(0, 1)*m2.get(1, 0) + m1.get(1, 1)*m2.get(1, 1) + m1.get(2, 1)*m2.get(1, 2),
+                      m1.get(0, 1)*m2.get(2, 0) + m1.get(1, 1)*m2.get(2, 1) + m1.get(2, 1)*m2.get(2, 2),
+
+                      m1.get(0, 2)*m2.get(0, 0) + m1.get(1, 2)*m2.get(0, 1) + m1.get(2, 2)*m2.get(0, 2),
+                      m1.get(0, 2)*m2.get(1, 0) + m1.get(1, 2)*m2.get(1, 1) + m1.get(2, 2)*m2.get(1, 2),
+                      m1.get(0, 2)*m2.get(2, 0) + m1.get(1, 2)*m2.get(2, 1) + m1.get(2, 2)*m2.get(2, 2));
 }
 
 #endif // MATRIX_H
