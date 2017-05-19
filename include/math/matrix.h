@@ -22,6 +22,8 @@ public:
     Point2(T x, T y);
 
     T& operator[](unsigned int n) throw (std::out_of_range); //setter
+    const T& operator[](unsigned int n) const throw (std::out_of_range); //setter
+
     T getX() const;
     T getY() const;
 
@@ -47,6 +49,7 @@ public:
     T get(unsigned int x, unsigned int y) const throw (std::out_of_range);
     Matrix2 invert();
     T* operator[](unsigned int n) throw (std::out_of_range);
+    const T* operator[](unsigned int n) const throw (std::out_of_range);
 
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const Matrix2<U>& m);
@@ -115,6 +118,8 @@ public:
     T getZ() const;
 
     T& operator[](unsigned int n) throw (std::out_of_range);
+    const T& operator[](unsigned int n) const throw (std::out_of_range);
+
     template<typename U>
     friend std::ostream& operator<<(std::ostream& os, const Point3<U>& p);
 };
@@ -138,6 +143,8 @@ public:
 
 
     T* operator[](int n) throw (std::out_of_range);
+    const T* operator[](int n) const throw (std::out_of_range);
+
     float det() const;
     T get(int x, int y) const throw (std::out_of_range);
 
@@ -193,12 +200,50 @@ Matrix3<T> operator*(const Matrix3<T>& m1, const Matrix3<T>& m2);
 
 //Matrix4
 
-/*
-
+template<typename T>
 class Matrix4 {
+private:
+    T data[16];
+public:
+    float det() const;
 
+    T* operator[](unsigned int n);
+    const T* operator[](unsigned int n) const;
+    T get(int x, int y) const throw (std::out_of_range);
+    T get(int n) const throw (std::out_of_range);
+
+    Matrix4();
+    Matrix4(int i);
+    Matrix4(int i, float theta);
+    Matrix4(int i, float arg1, float arg2);
+    Matrix4(int i, const Point3<T>& p);
+    Matrix4(T a1, T a2, T a3, T a4,
+            T a5, T a6, T a7, T a8,
+            T a9, T a10, T a11, T a12,
+            T a13, T a14, T a15, T a16);
+
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Matrix4<U> m);
 };
-*/
+
+template<typename T>
+Vector3<T> operator*(const Matrix4<T>& m, const Vector3<T>& v);
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, const Matrix4<T>& m);
+
+template<typename T>
+Matrix4<T> operator*(const Matrix4<T>& m, float f);
+
+template<typename T>
+Matrix4<T> operator*(float f, const Matrix4<T>& m);
+
+template<typename T>
+Matrix4<T> operator~(const Matrix4<T>& m);
+
+template<typename T>
+Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2);
+
 /////////////////////IMPLEMENTATIONS/////////////////////////////
 #define MATRIX_IDENTITY 0
 #define MATRIX_ROTATION 1
@@ -220,6 +265,12 @@ template <typename T>
 T& Point2<T>::operator[](unsigned int n) throw (std::out_of_range) {
     if(n > 1) throw std::out_of_range("Tried to access index out of range.");
     len = -1;
+    return n == 0 ? x : y;
+}
+
+template <typename T>
+const T& Point2<T>::operator[](unsigned int n) const throw (std::out_of_range) {
+    if(n > 1) throw std::out_of_range("Tried to access index out of range.");
     return n == 0 ? x : y;
 }
 
@@ -306,6 +357,12 @@ T Matrix2<T>::get(unsigned int x, unsigned int y) const throw (std::out_of_range
 
 template<typename T>
 T* Matrix2<T>::operator[](unsigned int n) throw (std::out_of_range){
+    if(n > 1) throw std::out_of_range("Index is out of range");
+    return data + 2*n;
+}
+
+template<typename T>
+const T* Matrix2<T>::operator[](unsigned int n) const throw (std::out_of_range){
     if(n > 1) throw std::out_of_range("Index is out of range");
     return data + 2*n;
 }
@@ -451,6 +508,18 @@ T& Point3<T>::operator[](unsigned int n) throw (std::out_of_range) {
     }
 }
 
+template<typename T>
+const T& Point3<T>::operator[](unsigned int n) const throw (std::out_of_range) {
+    if(n > 2) throw std::out_of_range("Index out of range!");
+    switch(n) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+    }
+}
 template<typename U>
 std::ostream& operator<<(std::ostream& os, const Point3<U>& p) {
     os << "[" << p.x << ", " << p.y << ", " << p.z << "]";
@@ -543,6 +612,12 @@ Matrix3<T>::Matrix3(T a1, T a2, T a3,
 
 template<typename T>
 T* Matrix3<T>::operator[](int n) throw (std::out_of_range) {
+    if(n > 3) throw std::out_of_range("Index out of range");
+    return data + 3*n;
+}
+
+template<typename T>
+const T* Matrix3<T>::operator[](int n) const throw (std::out_of_range) {
     if(n > 3) throw std::out_of_range("Index out of range");
     return data + 3*n;
 }
@@ -661,6 +736,181 @@ Matrix3<T> operator*(const Matrix3<T>& m1, const Matrix3<T>& m2) {
                       m1.get(0, 2)*m2.get(0, 0) + m1.get(1, 2)*m2.get(0, 1) + m1.get(2, 2)*m2.get(0, 2),
                       m1.get(0, 2)*m2.get(1, 0) + m1.get(1, 2)*m2.get(1, 1) + m1.get(2, 2)*m2.get(1, 2),
                       m1.get(0, 2)*m2.get(2, 0) + m1.get(1, 2)*m2.get(2, 1) + m1.get(2, 2)*m2.get(2, 2));
+}
+
+//Matrix4 implementation
+
+template<typename T>
+Matrix4<T>::Matrix4() {
+    for(int i = 0; i < 16; i++)
+      data[i] = i%5 == 0;
+}
+
+template<typename T>
+Matrix4<T>::Matrix4(int i) {
+    switch(i){
+        case MATRIX_IDENTITY:
+        default:
+        for(int i = 0; i < 16; i++)
+            data[i] = i%5 == 0;
+        break;
+    }
+}
+
+template<typename T>
+Matrix4<T>::Matrix4(int i, float theta) {
+    switch(i){
+        float st, ct;
+        case MATRIX_ROTATION:
+        case MATRIX_ROTATION_X:
+            st = sin(theta), ct = cos(theta);
+            data[0] = 1; data[1] = 0; data[2] = 0; data[3] = 0;
+            data[4] = 0; data[5] = ct; data[6] = -st; data[7] = 0;
+            data[8] = 0; data[9] = st; data[10] = ct; data[11] = 0;
+            data[12] = 0; data[13] = 0; data[14] = 0; data[15] = 1;
+        break;
+        case MATRIX_ROTATION_Y:
+            st = sin(theta), ct = cos(theta);
+            data[0] = ct; data[1] = 0; data[2] = st; data[3] = 0;
+            data[4] = 0; data[5] = 1; data[6] = 0; data[7] = 0;
+            data[8] = -st; data[9] = 0; data[10] = ct; data[11] = 0;
+            data[12] = 0; data[13] = 0; data[14] = 0; data[15] = 1;
+        break;
+        case MATRIX_ROTATION_Z:
+            st = sin(theta), ct = cos(theta);
+            data[0] = ct; data[1] = -st; data[2] = 0; data[3] = 0;
+            data[4] = st; data[5] = ct; data[6] = 0; data[7] = 0;
+            data[8] = 0; data[9] = 0; data[10] = 1; data[11] = 0;
+            data[12] = 0; data[13] = 0; data[14] = 0; data[15] = 1;
+        break;
+    }
+}
+
+template<typename T>
+Matrix4<T>::Matrix4(int i, float arg1, float arg2) {
+    switch(i){
+        case MATRIX_ROTATION:
+            float st = sin(arg1), ct = cos(arg1),
+            sp = sin(arg2), cp = cos(arg2);
+            data[0] = ct; data[1] = -st; data[2] = 0; data[3] = 0;
+            data[4] = st*cp; data[5] = ct*cp; data[6] = -sp; data[7] = 0;
+            data[8] = st*sp; data[9] = ct*sp; data[10] = cp; data[11] = 0;
+            data[12] = 0; data[13] = 0; data[14] = 0; data[15] = 1;
+        break;
+    }
+}
+
+template<typename T>
+Matrix4<T>::Matrix4(int i, const Point3<T>& p) {
+    switch(i){
+        case MATRIX_TRANSLATION:
+            for(int i = 0; i< 16; i++)
+                data[i] = i%5 ==0;
+            data[3] = p.get(0);
+            data[7] = p.get(1);
+            data[11] = p.get(2);
+        break;
+    }
+}
+
+template<typename T>
+Matrix4<T>::Matrix4(T a1, T a2, T a3, T a4,
+                    T a5, T a6, T a7, T a8,
+                    T a9, T a10, T a11, T a12,
+                    T a13, T a14, T a15, T a16)
+{
+     data[0] = a1;   data[1] = a2;   data[2] = a3;   data[3] = a4;
+     data[4] = a5;   data[5] = a6;   data[6] = a7;   data[7] = a8;
+     data[8] = a9;   data[9] = a10;  data[10] = a11; data[11] = a12;
+     data[12] = a13; data[13] = a14; data[14] = a15; data[15] = a16;
+}
+
+template<typename T>
+T* Matrix4<T>::operator[](unsigned int n) {
+    if(n > 3) throw std::out_of_range("index out of range!");
+    return data + 4*n;
+}
+
+template<typename T>
+const T* Matrix4<T>::operator[](unsigned int n) const {
+    if(n > 3) throw std::out_of_range("index out of range!");
+    return data + 4*n;
+}
+
+template <typename T>
+T Matrix4<T>::get(int x, int y) const throw (std::out_of_range) {
+    if(x > 3 || y > 3) throw std::out_of_range("index(es) out of range");
+    return data[x + 4*y];
+}
+
+template<typename T>
+T Matrix4<T>::get(int n) const throw (std::out_of_range) {
+    if(n > 15) throw std::out_of_range("index out of range");
+    return data[n];
+}
+
+template<typename T>
+float Matrix4<T>::det() const {
+    return data[0] * Matrix3<T>(data[5],data[6],data[7],data[9],data[10],data[11],data[13],data[14],data[15]).det()
+          -data[1] * Matrix3<T>(data[4],data[6],data[7],data[8],data[10],data[11],data[12],data[14],data[15]).det()
+          +data[2] * Matrix3<T>(data[4],data[5],data[7],data[8],data[9], data[11],data[12],data[13],data[15]).det()
+          -data[3] * Matrix3<T>(data[4],data[5],data[6],data[8],data[9], data[10],data[12],data[13],data[14]).det();
+}
+
+template<typename U>
+std::ostream& operator<<(std::ostream& os, const Matrix4<U> m) {
+    os << "["<< m.data[0] << ", " << m.data[1] << ", " << m.data[2] <<  ", " << m.data[3] <<  "]" << "\n";
+    os << "["<< m.data[4] << ", " << m.data[5] << ", " << m.data[6] <<  ", " << m.data[7] <<  "]" << "\n";
+    os << "["<< m.data[8] << ", " << m.data[9] << ", " << m.data[10] << ", " << m.data[11] <<  "]" << "\n";
+    os << "["<< m.data[12] << ", " << m.data[13] << ", " << m.data[14] <<  ", " << m.data[15] <<  "]" << "\n";
+    return os;
+}
+
+template<typename T>
+Vector3<T> operator*(const Matrix4<T>& m, const Vector3<T>& v) {
+    return Vector3<T>(m.get(0, 0)*v.get(0) + m.get(1, 0)*v.get(1) + m.get(2, 0)*v.get(2) + m.get(3, 0),
+                      m.get(0, 1)*v.get(0) + m.get(1, 1)*v.get(1) + m.get(2, 1)*v.get(2) + m.get(3, 1),
+                      m.get(0, 2)*v.get(0) + m.get(1, 2)*v.get(1) + m.get(2, 2)*v.get(2) + m.get(3, 2));
+}
+
+template<typename T>
+Vector3<T> operator*(const Vector3<T>& v, const Matrix4<T>& m) {
+    return Vector3<T>(m.get(0, 0)*v.get(0) + m.get(0, 1)*v.get(1) + m.get(0, 2)*v.get(2) + m.get(0, 3),
+                      m.get(1, 0)*v.get(0) + m.get(1, 1)*v.get(1) + m.get(1, 2)*v.get(2) + m.get(1, 3),
+                      m.get(2, 0)*v.get(0) + m.get(2, 1)*v.get(1) + m.get(2, 2)*v.get(2) + m.get(2, 3));
+}
+
+template<typename T>
+Matrix4<T> operator*(const Matrix4<T>& m, float f) {
+    Matrix4<T> m2;
+    for(int i = 0; i < 4; ++i)
+        for(int j = 0; j < 4; ++j)
+            m2[i][j] = m.get(i,j) * f;
+    return m2;
+}
+
+template<typename T>
+Matrix4<T> operator*(float f, const Matrix4<T>& m) {
+    Matrix4<T> m2;
+    for(int i = 0; i < 4; ++i)
+        for(int j = 0; j < 4; ++j)
+            m2[i][j] = m.get(i,j) * f;
+    return m2;
+}
+
+template<typename T>
+Matrix4<T> operator~(const Matrix4<T>& m);
+
+template<typename T>
+Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2) {
+    Matrix4<T> mat;
+    for(int i = 0; i < 4; i++) {
+        mat[i][i] = 0; //since default-constructor gives identity matrix
+        for(int j = 0; j < 4; j++)
+            for(int k = 0; k < 4; k++)
+                mat[i][j] += m1.get(k, i) * m2.get(j, k);
+    }
+    return mat;
 }
 
 #endif // MATRIX_H
