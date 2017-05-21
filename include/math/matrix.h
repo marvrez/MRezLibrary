@@ -2,6 +2,7 @@
 #define MATRIX_H
 
 #include <string>
+#include <vector>
 #include <sstream>
 #include <cmath>
 #include <ostream>
@@ -243,6 +244,45 @@ Matrix4<T> operator~(const Matrix4<T>& m);
 
 template<typename T>
 Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2);
+
+
+//Vector
+
+template<typename T>
+class Vector {
+private:
+    std::vector<T> data;
+    int size;
+public:
+    T& operator[](int n);
+    int getLength() const;
+    T get(int n) const;
+    Vector(int size);
+    Vector(int size, const T* p);
+    Vector(const Vector& gv);
+
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, const Vector<U>& vec);
+};
+
+template<typename T>
+T operator*(const Vector<T>& g1, const Vector<T>& g2);
+
+template<typename T>
+Vector<T> operator+(const Vector<T>& g1, const Vector<T>& g2);
+
+template<typename T>
+Vector<T> operator-(const Vector<T>& g1, const Vector<T>& g2);
+
+template<typename T>
+Vector<T> operator*(const Vector<T>& g1, float f);
+
+template<typename T>
+Vector<T> operator*(float f, const Vector<T>& g1);
+
+template<typename T>
+Vector<T> operator/(const Vector<T>& g1, float f);
+
 
 /////////////////////IMPLEMENTATIONS/////////////////////////////
 #define MATRIX_IDENTITY 0
@@ -911,6 +951,104 @@ Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2) {
                 mat[i][j] += m1.get(k, i) * m2.get(j, k);
     }
     return mat;
+}
+
+//Vector
+
+template<typename T>
+Vector<T>::Vector(int size) : size(size), data(size) { }
+
+template<typename T>
+Vector<T>::Vector(int size, const T* p) : size(size), data(p, p + size) { }
+
+template<typename T>
+Vector<T>::Vector(const Vector& gv) : size(gv.size), data(gv.data) { }
+
+template<typename T>
+T& Vector<T>::operator[](int n) {
+    return data[n];
+}
+
+template<typename T>
+int Vector<T>::getLength() const {
+    return size;
+}
+
+template<typename T>
+T Vector<T>::get(int n) const {
+    return data[n];
+}
+
+template<typename U>
+std::ostream& operator<<(std::ostream& os, const Vector<U>& vec) {
+    os << "[";
+    for(int i = 0; i < vec.data.size(); ++i) {
+        os << vec.data[i];
+        if(i != vec.data.size()-1) os << ", ";
+    }
+    os << "]";
+    return os;
+}
+
+template<typename T>
+T operator*(const Vector<T>& v1, const Vector<T>& v2) {
+    T result = 0;
+    if(v1.getLength() == v2.getLength())
+        for(int i = 0; i < v1.getLength(); i++)
+            result += v1.get(i) * v2.get(i);
+    return result;
+}
+
+template<typename T>
+Vector<T> operator+(const Vector<T>& v1, const Vector<T>& v2) {
+    Vector<T> vec(v1.getLength());
+    if(v1.getLength() == v2.getLength()){
+        for(int i = 0; i < vec.getLength(); ++i)
+            vec[i] = v1.get(i) + v2.get(i);
+    }
+    else {
+        for(int i= 0; i< vec.getLength(); ++i)
+            vec[i] = 0;
+    }
+    return vec;
+}
+
+template<typename T>
+Vector<T> operator-(const Vector<T>& v1, const Vector<T>& v2) {
+    Vector<T> vec(v1.getLength());
+    if(v1.getLength() == v2.getLength()){
+        for(int i = 0; i < vec.getLength(); ++i)
+            vec[i] = v1.get(i) - v2.get(i);
+    }
+    else {
+        for(int i = 0; i< vec.getLength(); ++i)
+            vec[i] = 0;
+    }
+    return vec;
+}
+
+template<typename T>
+Vector<T> operator*(const Vector<T>& v1, float f) {
+    Vector<T> vec(v1.getLength());
+    for(int i = 0; i < vec.getLength(); ++i)
+        vec[i] = v1.get(i) * f;
+    return vec;
+}
+
+template<typename T>
+Vector<T> operator*(float f, const Vector<T>& v1) {
+    Vector<T> vec(v1.getLength());
+    for(int i = 0; i < vec.getLength(); ++i)
+        vec[i] = v1.get(i) * f;
+    return vec;
+}
+
+template<typename T>
+Vector<T> operator/(const Vector<T>& v1, float f) {
+    Vector<T> vec(v1.getLength());
+    for(int i = 0; i < vec.getLength(); ++i)
+        vec[i] = v1.get(i) / f;
+    return vec;
 }
 
 #endif // MATRIX_H
