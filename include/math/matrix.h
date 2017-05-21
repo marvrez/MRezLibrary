@@ -63,13 +63,10 @@ template<typename T>
 float cross(const Vector2<T>& v1, const Vector2<T>& v2);
 
 template<typename T>
-float operator*(const Vector2<T>& v1, const Vector2<T>& v2);
+T operator*(const Vector2<T>& v1, const Vector2<T>& v2);
 
-template<typename T>
-Vector2<T> operator*(const Vector2<T>& v1, float f);
 
-template<typename T>
-Vector2<T> operator*(float f, const Vector2<T>& v1);
+//arithmetic operators
 
 template<typename T>
 Vector2<T> operator+(const Vector2<T>& v1, const Vector2<T>& v2);
@@ -84,10 +81,13 @@ template<typename T>
 Vector2<T> operator*(const Matrix2<T>& m, const Vector2<T>& v);
 
 template<typename T>
-Vector2<T> operator*(const Vector2<T>& v, const Matrix2<T>& m);
+Vector2<T> operator*(const Vector2<T>& v1, float f);
 
 template<typename T>
-Matrix2<T> operator~(const Matrix2<T>& m);
+Vector2<T> operator*(float f, const Vector2<T>& v1);
+
+template<typename T>
+Vector2<T> operator*(const Vector2<T>& v, const Matrix2<T>& m);
 
 template<typename T>
 Matrix2<T> operator*(const Matrix2<T>& m1, const Matrix2<T>& m2);
@@ -98,6 +98,8 @@ Matrix2<T> operator*(const Matrix2<T>& m1, float f);
 template<typename T>
 Matrix2<T> operator*(float f, const Matrix2<T>& m1);
 
+template<typename T>
+Matrix2<T> operator~(const Matrix2<T>& m);
 
 //Point3/Vector3/Matrix3
 
@@ -283,6 +285,56 @@ Vector<T> operator*(float f, const Vector<T>& g1);
 template<typename T>
 Vector<T> operator/(const Vector<T>& g1, float f);
 
+//Matrix
+
+template<typename T>
+class Matrix{
+private:
+    vector<T> data;
+    int w, h;
+public:
+    T* operator[](int a);
+
+    T get(int x, int y) const;
+    T get(int n) const;
+    int getWidth() const;
+    int getHeight() const;
+    int getW() const;
+    int getH() const;
+    float det() const;
+    float _det() const;
+    Matrix inv() const;
+    Matrix(int w, int h);
+    Matrix(int w, int h, const T* p);
+    Matrix(const Matrix& gm);
+
+    Matrix _minor(int a, int b) const;
+
+    template<typename U>
+    friend std::ostream& operator<<(std::ostream& os, Matrix<U> mat);
+};
+
+template<typename T>
+Vector<T> operator*(const Matrix<T>& mat, const Vector<T>& vec);
+
+template<typename T>
+Vector<T> operator*(const Vector<T>& vec, const Matrix<T>& mat);
+
+template<typename T>
+Matrix<T> operator~(const Matrix<T>& mat);
+
+template<typename T>
+Matrix<T> operator*(const Matrix<T>& mat, float f);
+
+template<typename T>
+Matrix<T> operator/(const Matrix<T>& mat, float f);
+
+template<typename T>
+Matrix<T> operator*(float f, const Matrix<T>& mat);
+
+template<typename T>
+Matrix<T> operator*(const Matrix<T>& m1, const Matrix<T>& m2);
+
 
 /////////////////////IMPLEMENTATIONS/////////////////////////////
 #define MATRIX_IDENTITY 0
@@ -420,7 +472,7 @@ float cross(const Vector2<T>& v1, const Vector2<T>& v2) {
 }
 
 template<typename T>
-float operator*(const Vector2<T>& v1, const Vector2<T>& v2) {
+T operator*(const Vector2<T>& v1, const Vector2<T>& v2) {
     return v1.get(0)*v2.get(0) + v1.get(1)*v2.get(1);
 }
 
