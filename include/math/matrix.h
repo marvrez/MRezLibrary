@@ -49,6 +49,7 @@ public:
     float det() const;
     T get(unsigned int x, unsigned int y) const throw (std::out_of_range);
     Matrix2 invert();
+    Matrix2 transpose() const;
     T* operator[](unsigned int n) throw (std::out_of_range);
     const T* operator[](unsigned int n) const throw (std::out_of_range);
 
@@ -149,6 +150,7 @@ public:
     const T* operator[](int n) const throw (std::out_of_range);
 
     float det() const;
+    Matrix3 transpose() const;
     T get(int x, int y) const throw (std::out_of_range);
 
     template<typename U>
@@ -208,13 +210,6 @@ class Matrix4 {
 private:
     T data[16];
 public:
-    float det() const;
-
-    T* operator[](unsigned int n);
-    const T* operator[](unsigned int n) const;
-    T get(int x, int y) const throw (std::out_of_range);
-    T get(int n) const throw (std::out_of_range);
-
     Matrix4();
     Matrix4(int i);
     Matrix4(int i, float theta);
@@ -224,6 +219,13 @@ public:
             T a5, T a6, T a7, T a8,
             T a9, T a10, T a11, T a12,
             T a13, T a14, T a15, T a16);
+    float det() const;
+    Matrix4 transpose() const;
+
+    T* operator[](unsigned int n);
+    const T* operator[](unsigned int n) const;
+    T get(int x, int y) const throw (std::out_of_range);
+    T get(int n) const throw (std::out_of_range);
 
     template<typename U>
     friend std::ostream& operator<<(std::ostream& os, const Matrix4<U> m);
@@ -253,15 +255,17 @@ Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2);
 template<typename T>
 class Vector {
 private:
-    std::vector<T> data;
+    T* data;
     int size;
 public:
+    Vector(int size);
+    Vector(int size, const T* p);
+    Vector(const Vector& v);
+    ~Vector() { delete[] data; }
+
     T& operator[](int n);
     int getLength() const;
     T get(int n) const;
-    Vector(int size);
-    Vector(int size, const T* p);
-    Vector(const Vector& gv);
 
     template<typename U>
     friend std::ostream& operator<<(std::ostream& os, const Vector<U>& vec);
@@ -288,12 +292,17 @@ Vector<T> operator/(const Vector<T>& g1, float f);
 //Matrix
 
 template<typename T>
-class Matrix{
+class Matrix {
 private:
-    vector<T> data;
+    T* data;
     int w, h;
 public:
-    T* operator[](int a);
+    Matrix(int w, int h);
+    Matrix(int w, int h, const T* p);
+    Matrix(const Matrix& mat);
+    ~Matrix() { delete[] data; }
+
+    T* operator[](int n);
 
     T get(int x, int y) const;
     T get(int n) const;
@@ -303,15 +312,13 @@ public:
     int getH() const;
     float det() const;
     float _det() const;
-    Matrix inv() const;
-    Matrix(int w, int h);
-    Matrix(int w, int h, const T* p);
-    Matrix(const Matrix& gm);
 
+    Matrix inv() const;
+    Matrix transpose() const;
     Matrix _minor(int a, int b) const;
 
     template<typename U>
-    friend std::ostream& operator<<(std::ostream& os, Matrix<U> mat);
+    friend std::ostream& operator<<(std::ostream& os, const Matrix<U>& mat);
 };
 
 template<typename T>
@@ -439,6 +446,12 @@ template<typename T>
 Matrix2<T> Matrix2<T>::invert() {
     return (1 /this->det()) * Matrix2(data[3], -data[1],
                                      -data[2],  data[0]);
+}
+
+template<typename T>
+Matrix2<T> Matrix2<T>::transpose() const {
+    return Matrix2(this->get(0, 0), this->get(0, 1),
+                   this->get(1, 0), this->get(1, 1));
 }
 
 template<typename T>
@@ -722,6 +735,13 @@ float Matrix3<T>::det() const {
 }
 
 template<typename T>
+Matrix3<T> Matrix3<T>::transpose() const {
+    return Matrix3(this->get(0, 0), this->get(0, 1), this->get(0, 2),
+                   this->get(1, 0), this->get(1, 1), this->get(1, 2),
+                   this->get(2, 0), this->get(2, 1), this->get(2, 2));
+}
+
+template<typename T>
 T Matrix3<T>::get(int x, int y) const throw (std::out_of_range) {
     if(x > 2 || y > 2 ) throw std::out_of_range("Index(es) are out of range.");
     return data[x + 3*y];
@@ -949,6 +969,15 @@ float Matrix4<T>::det() const {
           -data[3] * Matrix3<T>(data[4],data[5],data[6],data[8],data[9], data[10],data[12],data[13],data[14]).det();
 }
 
+template<typename T>
+Matrix4<T> Matrix4<T>::transpose() const {
+    Matrix4<T> transposed;
+    for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+            transposed[i][j] = this->get(i, j);
+    return transposed;
+}
+
 template<typename U>
 std::ostream& operator<<(std::ostream& os, const Matrix4<U> m) {
     os << "["<< m.data[0] << ", " << m.data[1] << ", " << m.data[2] <<  ", " << m.data[3] <<  "]" << "\n";
@@ -1008,13 +1037,16 @@ Matrix4<T> operator*(const Matrix4<T>& m1, const Matrix4<T>& m2) {
 //Vector
 
 template<typename T>
-Vector<T>::Vector(int size) : size(size), data(size) { }
+Vector<T>::Vector(int size) : size(size), data(new T[size]()) { }
 
 template<typename T>
-Vector<T>::Vector(int size, const T* p) : size(size), data(p, p + size) { }
+Vector<T>::Vector(int size, const T* p) : size(size), data(new T[size]()) {
+    for(int i = 0; i < size; ++i)
+        data[i] = p[i];
+}
 
 template<typename T>
-Vector<T>::Vector(const Vector& gv) : size(gv.size), data(gv.data) { }
+Vector<T>::Vector(const Vector& v) : Vector(v.getLength(), v.data) { }
 
 template<typename T>
 T& Vector<T>::operator[](int n) {
@@ -1034,9 +1066,9 @@ T Vector<T>::get(int n) const {
 template<typename U>
 std::ostream& operator<<(std::ostream& os, const Vector<U>& vec) {
     os << "[";
-    for(int i = 0; i < vec.data.size(); ++i) {
+    for(int i = 0; i < vec.getLength(); ++i) {
         os << vec.data[i];
-        if(i != vec.data.size()-1) os << ", ";
+        if(i != vec.getLength()-1) os << ", ";
     }
     os << "]";
     return os;
@@ -1101,6 +1133,139 @@ Vector<T> operator/(const Vector<T>& v1, float f) {
     for(int i = 0; i < vec.getLength(); ++i)
         vec[i] = v1.get(i) / f;
     return vec;
+}
+
+//general matrix implementation
+
+template<typename T>
+Matrix<T>::Matrix(int w, int h) : w(w), h(h), data(new T[w*h]()) { }
+
+template<typename T>
+Matrix<T>::Matrix(int w, int h, const T* p) : Matrix(w,h) {
+    for(int i = 0; i < w*h; ++i)
+        data[i] = p[i];
+}
+
+template<typename T>
+Matrix<T>::Matrix(const Matrix<T>& mat) : w(mat.w), h(mat.h), data(new T[w*h]()) {
+    for(int i = 0; i < h; ++i)
+        for(int j = 0; j < w; ++j)
+            data[i*w + j] = mat.get(j, i);
+}
+
+template<typename T>
+T* Matrix<T>::operator[](int n) {
+    return data + w*n;
+    //return &data[0] + w*n;
+}
+
+template<typename T>
+T Matrix<T>::get(int x, int y) const {
+    return data[y*w + x];
+}
+template<typename T>
+T Matrix<T>::get(int n) const {
+    return data[n];
+}
+
+template<typename T>
+int Matrix<T>::getWidth() const {
+   return w;
+}
+template<typename T>
+int Matrix<T>::getHeight() const {
+   return h;
+}
+
+template<typename T>
+int Matrix<T>::getW() const {
+    return w;
+}
+
+template<typename T>
+int Matrix<T>::getH() const {
+    return h;
+}
+
+template<typename T>
+float Matrix<T>::det() const {
+    if(w != h) return 0;
+
+    if(w == 2 && h ==2) return data[0]*data[3] - data[1]*data[2];
+    else {
+        float sum = 0;
+        int u = 1;
+        for(int i = 0; i < w; i++){
+            sum += u * data[i] * (_minor(i, 0)._det());
+            u *= -1;
+        }
+        return sum;
+    }
+}
+
+template<typename T>
+float Matrix<T>::_det() const {
+    if(w == 2 && h ==2) return data[0]*data[3] - data[1]*data[2];
+    else {
+        float sum = 0;
+        int u = 1;
+        for(int i = 0; i < w; i++){
+            sum += u * data[i] * (_minor(i, 0)._det());
+            u*=-1;
+        }
+        return sum;
+    }
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::transpose() const {
+    Matrix<T> transposed(this->h, this->w);
+    for(int i= 0 ; i < this->h; ++i)
+        for(int j = 0; j < this->w; ++j)
+            transposed[j][i] = this->get(j, i);
+    return transposed;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::inv() const {
+    Matrix mat(w, h);
+    for(int i= 0; i< h; i++)
+        for(int j = 0; j < w; j++)
+            mat[i][j] = _minor(j, i).det();
+
+    for(int i = 0; i < h; i++)
+        for(int j = 0; j < w; j++)
+            mat[i][j] = (i + j) & 1 ? -mat[i][j] : mat[i][j];
+
+    return mat.transpose() / det();
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::_minor(int a, int b) const {
+    Matrix<T> mat(w - 1, h - 1);
+    int offset_i = 0, offset_j = 0;
+    for(int i = 0; i < h - 1; i++){
+        if(i == b) offset_i++;
+        for(int j = 0; j < w - 1; j++){
+            if(j == a) offset_j++;
+            mat[i][j] = this->get(j + offset_j, i + offset_i);
+        }
+        offset_j = 0;
+    }
+    return mat;
+}
+
+template<typename U>
+std::ostream& operator<<(std::ostream& os, const Matrix<U>& mat) {
+    os << mat.get(0,0) << std::endl << std::endl;
+    for(int i = 0; i < mat.getHeight(); ++i) {
+        for(int j = 0; j < mat.getWidth(); ++j) {
+            if(j == 0)  os << "[" << mat.get(j,i) << ", ";
+            else if(j == mat.getWidth()-1) os << mat.get(j,i) << "]\n";
+            else os << mat.get(j,i) << ", ";
+        }
+    }
+    return os;
 }
 
 #endif // MATRIX_H
