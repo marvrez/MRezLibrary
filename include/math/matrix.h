@@ -328,9 +328,6 @@ template<typename T>
 Vector<T> operator*(const Vector<T>& vec, const Matrix<T>& mat);
 
 template<typename T>
-Matrix<T> operator~(const Matrix<T>& mat);
-
-template<typename T>
 Matrix<T> operator*(const Matrix<T>& mat, float f);
 
 template<typename T>
@@ -496,7 +493,7 @@ Vector2<T> operator*(const Vector2<T>& v1, float f) {
 
 template<typename T>
 Vector2<T> operator*(float f, const Vector2<T>& v1) {
-    return Vector2<T>(v1.get(0)*f, v1.get(1)*f);
+    return v1*f;
 }
 
 template<typename T>
@@ -546,8 +543,7 @@ Matrix2<T> operator*(const Matrix2<T>& m1, float f) {
 
 template<typename T>
 Matrix2<T> operator*(float f, const Matrix2<T>& m1) {
-    return Matrix2<T>(m1.get(0, 0)*f, m1.get(1, 0)*f,
-                   m1.get(0, 1)*f, m1.get(1, 1)*f);
+    return m1*f;
 }
 
 //Point3/Matrix3 implementations
@@ -774,7 +770,7 @@ Vector3<T> operator*(const Vector3<T>& v, float f) {
 
 template<typename T>
 Vector3<T> operator*(float f, const Vector3<T>& v) {
-    return Vector3<T>(v.get(0)*f, v.get(1)*f, v.get(2)*f);
+    return v*f;
 }
 
 template<typename T>
@@ -822,9 +818,7 @@ Matrix3<T> operator*(const Matrix3<T>& m, float f) {
 
 template<typename T>
 Matrix3<T> operator*(float f, const Matrix3<T>& m) {
-    return Matrix3<T>(m.get(0, 0)*f, m.get(1, 0)*f, m.get(2, 0)*f,
-                      m.get(0, 1)*f, m.get(1, 1)*f, m.get(2, 1)*f,
-                      m.get(0, 2)*f, m.get(1, 2)*f, m.get(2, 2)*f);
+    return m*f;
 }
 
 template<typename T>
@@ -1012,11 +1006,7 @@ Matrix4<T> operator*(const Matrix4<T>& m, float f) {
 
 template<typename T>
 Matrix4<T> operator*(float f, const Matrix4<T>& m) {
-    Matrix4<T> m2;
-    for(int i = 0; i < 4; ++i)
-        for(int j = 0; j < 4; ++j)
-            m2[i][j] = m.get(i,j) * f;
-    return m2;
+    return m*f;
 }
 
 template<typename T>
@@ -1121,10 +1111,7 @@ Vector<T> operator*(const Vector<T>& v1, float f) {
 
 template<typename T>
 Vector<T> operator*(float f, const Vector<T>& v1) {
-    Vector<T> vec(v1.getLength());
-    for(int i = 0; i < vec.getLength(); ++i)
-        vec[i] = v1.get(i) * f;
-    return vec;
+    return v1*f;
 }
 
 template<typename T>
@@ -1227,15 +1214,15 @@ Matrix<T> Matrix<T>::transpose() const {
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::inv() const {
+Matrix<T> Matrix<T>::inv() const { //invertere vha sub-determinantene, -> adjoint method
     Matrix mat(w, h);
-    for(int i= 0; i< h; i++)
-        for(int j = 0; j < w; j++)
+    for(int i= 0; i< h; ++i)
+        for(int j = 0; j < w; ++j)
             mat[i][j] = _minor(j, i).det();
 
-    for(int i = 0; i < h; i++)
-        for(int j = 0; j < w; j++)
-            mat[i][j] = (i + j) & 1 ? -mat[i][j] : mat[i][j];
+    for(int i = 0; i < h; ++i)
+        for(int j = 0; j < w; ++j)
+            mat[i][j] = (i + j) & 1 ? -mat[i][j] : mat[i][j]; //minus hvis odde
 
     return mat.transpose() / det();
 }
@@ -1244,9 +1231,9 @@ template<typename T>
 Matrix<T> Matrix<T>::_minor(int a, int b) const {
     Matrix<T> mat(w - 1, h - 1);
     int offset_i = 0, offset_j = 0;
-    for(int i = 0; i < h - 1; i++){
+    for(int i = 0; i < h - 1; ++i){
         if(i == b) offset_i++;
-        for(int j = 0; j < w - 1; j++){
+        for(int j = 0; j < w - 1; ++j){
             if(j == a) offset_j++;
             mat[i][j] = this->get(j + offset_j, i + offset_i);
         }
@@ -1266,6 +1253,75 @@ std::ostream& operator<<(std::ostream& os, const Matrix<U>& mat) {
         }
     }
     return os;
+}
+
+template<typename T>
+Vector<T> operator*(const Matrix<T>& mat, const Vector<T>& vec) {
+    Vector<T> result(mat.getHeight());
+    if(mat.getWidth() != vec.getLength()) return result;
+
+    else {
+        for(int i = 0; i< mat.getHeight(); ++i){
+            result[i] = 0;
+            for(int j = 0; j < mat.getWidth(); ++j)
+                result[i] += mat.get(j, i) * vec.get(j);
+        }
+        return result;
+    }
+}
+
+template<typename T>
+Vector<T> operator*(const Vector<T>& vec, const Matrix<T>& mat) {
+    Vector<T> result(mat.getWidth());
+    if(mat.getHeight() != vec.getLength()) return result;
+
+    else {
+        for(int i = 0; i < mat.getWidth(); ++i){
+            result[i] = 0;
+            for(int j = 0; j < mat.getHeight(); ++j)
+                result[i] += mat.get(j, i) * vec.get(j);
+        }
+        return result;
+    }
+}
+
+template<typename T>
+Matrix<T> operator*(const Matrix<T>& mat, float f) {
+    Matrix<T> result(mat.getWidth(), mat.getHeight());
+    for(int i  = 0; i < mat.getHeight(); ++i)
+        for(int j = 0; j < mat.getWidth(); ++j)
+            result[i][j] = mat.get(j, i) * f;
+    return result;
+}
+
+template<typename T>
+Matrix<T> operator*(float f, const Matrix<T>& mat) {
+    return mat*f;
+}
+
+template<typename T>
+Matrix<T> operator/(const Matrix<T>& mat, float f) {
+    Matrix<T> result(mat.getHeight(), mat.getWidth());
+    for(int i  = 0; i < mat.getHeight(); ++i)
+        for(int j = 0; j < mat.getWidth(); ++j)
+            result[i][j] = mat.get(j, i) / f;
+    return result;
+}
+
+
+template<typename T>
+Matrix<T> operator*(const Matrix<T>& m1, const Matrix<T>& m2) {
+    Matrix<T> mat(m1.getHeight(), m2.getWidth());
+
+    if(m1.getWidth() == m2.getHeight()) {
+        for(int i = 0; i < m1.getHeight(); ++i)
+            for(int j = 0; j < m2.getWidth();++j) {
+                mat[i][j] = 0;
+                for(int k = 0; k < m2.getHeight(); ++k)
+                    mat[i][j] += m1.get(k,i) * m2.get(j,k);
+            }
+    }
+    return mat;
 }
 
 #endif // MATRIX_H
