@@ -4,6 +4,7 @@
 #include <cmath>
 #include <float.h>
 
+namespace Math {
 //Defines
 #define M_PI            3.1415926535897932384626433832795f
 #define RAD(val)        ((val)*0.0174532925199432957692369076848f)
@@ -54,6 +55,19 @@ bool fEqual(float f1, float f2, float precision = LARGE_EPSILON) {
     return fabsf(f1-f2) <= precision;
 }
 
+int factorial(int n) {
+    int res = 1;
+    for (int i = 1; i <= n; ++i)
+        res *= i;
+    return res;
+}
+
+int digitSum(int n) {
+    return n ? (n%10) + digitSum(n/10) : 0;
+}
+
+
+} //namespace Math;
 
 
 #endif // MATH_H
