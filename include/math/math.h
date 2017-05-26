@@ -2,6 +2,7 @@
 #define MATH_H
 
 #include <cmath>
+#include <complex>
 #include <float.h>
 
 namespace Math {
@@ -66,6 +67,41 @@ int digitSum(int n) {
     return n ? (n%10) + digitSum(n/10) : 0;
 }
 
+unsigned long long combination(unsigned long long n, unsigned long long k) {
+    if (k > n) return 0;
+
+    if (k > n/2) k = n-k;
+
+    unsigned long long r = 1;
+    for (unsigned long long d = 0; d < k; ++d) {
+        r *= (n - d);
+        r /= (d + 1);
+    }
+    return r;
+}
+
+std::pair<std::complex<float>, std::complex<float>> solve_quadratic(float a, float b, float c) {
+    std::complex<float> x1 = 0, x2 = 0;
+
+    float determinant = b*b - (4 * a*c);
+
+    if (determinant > 0) {
+        x1 = (-b + sqrt(determinant)) / (a * 2);
+        x2 = (-b - sqrt(determinant)) / (a * 2);
+    }
+    else if (determinant == 0) {
+        x1 = (-b + sqrt(determinant)) / (a * 2);
+        x2 = (-b + sqrt(determinant)) / (a * 2);
+    }
+    else {
+        x1.real(-b / (a * 2));
+        x1.imag(sqrt(-determinant) / (a * 2));
+        x2.real(-b / (a * 2));
+        x2.imag(-sqrt(-determinant) / (a * 2));
+    }
+
+    return std::make_pair(x1, x2);
+}
 
 } //namespace Math;
 
