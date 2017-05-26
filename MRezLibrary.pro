@@ -15,4 +15,5 @@ HEADERS += \
     include/math/matrix.h \
     include/humanize/time.h \
     include/math/math.h \
-    include/misc./color.h
+    include/misc./color.h \
+    include/misc./string_utils.h
