@@ -13,4 +13,6 @@ HEADERS += \
     include/humanize/format_int.h \
     include/humanize/numbers.h \
     include/math/matrix.h \
-    include/humanize/time.h
+    include/humanize/time.h \
+    include/math/math.h \
+    include/misc./color.h
