@@ -1,6 +1,8 @@
 #ifndef MATH_H
 #define MATH_H
 
+#include "matrix.h"
+
 #include <cmath>
 #include <complex>
 #include <float.h>
@@ -80,27 +82,69 @@ unsigned long long combination(unsigned long long n, unsigned long long k) {
     return r;
 }
 
-std::pair<std::complex<float>, std::complex<float>> solve_quadratic(float a, float b, float c) {
+std::pair<std::complex<float>, std::complex<float> > solveQuadratic(float a, float b, float c) {
     std::complex<float> x1 = 0, x2 = 0;
-
     float determinant = b*b - (4 * a*c);
 
     if (determinant > 0) {
-        x1 = (-b + sqrt(determinant)) / (a * 2);
-        x2 = (-b - sqrt(determinant)) / (a * 2);
+        x1 = (-b + sqrt(determinant)) / (2*a);
+        x2 = (-b - sqrt(determinant)) / (2*a);
     }
     else if (determinant == 0) {
-        x1 = (-b + sqrt(determinant)) / (a * 2);
-        x2 = (-b + sqrt(determinant)) / (a * 2);
+        x1 = (-b + sqrt(determinant)) / (2*a);
+        x2 = (-b + sqrt(determinant)) / (2*a);
     }
     else {
-        x1.real(-b / (a * 2));
-        x1.imag(sqrt(-determinant) / (a * 2));
-        x2.real(-b / (a * 2));
-        x2.imag(-sqrt(-determinant) / (a * 2));
+        x1.real(-b / (2*a));
+        x1.imag(sqrt(-determinant) / (2*a));
+
+        x2.real(-b / (2*a));
+        x2.imag(-sqrt(-determinant) / (2*a));
     }
 
     return std::make_pair(x1, x2);
+}
+
+template<typename T>
+static bool doIntersect(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T>&& q2) {
+
+    //0 => colinear, 1 => clockwise, 2 => counterclockwise
+    auto direction = [](Point2<T>& p, Point2<T>& q, Point2<T>& r)  {
+        int cross = (Matrix2<T>(r[0]-q[0], r[1]-q[1],
+                                q[0]-p[0], q[1]-p[1])).det();
+
+        if (cross == 0) return 0;  // colinear
+        return (cross > 0) ? 1: 2; // clock or counterclock wise
+    };
+
+    // checks if point 'q' lies on line segment 'pr'
+    auto onSegment = [](Point2<T>& p, Point2<T>& q, Point2<T>& r) {
+        return (q[0] <= std::max(p[0], r[0]) && q[0] >= std::min(p[0], r[0]) &&
+                q[1] <= std::max(p[1], r[1]) && q[1] >= std::min(p[1], r[1]));
+    };
+
+    int d1 = direction(p1, q1, p2);
+    int d2 = direction(p1, q1, q2);
+    int d3 = direction(p2, q2, p1);
+    int d4 = direction(p2, q2, q1);
+
+    // General case - if we have different orientations
+    if (d1 != d2 && d3 != d4) return true;
+
+    // Special Cases
+    // p1, q1 and p2 are colinear and p2 lies on segment p1q1
+    if (d1 == 0 && onSegment(p1, p2, q1)) return true;
+
+    // p1, q1 and p2 are colinear and q2 lies on segment p1q1
+    if (d2 == 0 && onSegment(p1, q2, q1)) return true;
+
+    // p2, q2 and p1 are colinear and p1 lies on segment p2q2
+    if (d3 == 0 && onSegment(p2, p1, q2)) return true;
+
+     // p2, q2 and q1 are colinear and q1 lies on segment p2q2
+    if (d4 == 0 && onSegment(p2, q1, q2)) return true;
+
+    return false;
 }
 
 } //namespace Math;
