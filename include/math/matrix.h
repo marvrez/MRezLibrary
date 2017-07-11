@@ -25,8 +25,8 @@ public:
     T& operator[](unsigned int n) throw (std::out_of_range); //setter
     const T& operator[](unsigned int n) const throw (std::out_of_range); //setter
 
-    T getX() const;
-    T getY() const;
+    T X() const;
+    T Y() const;
 
     void normalize();
     float length();
@@ -117,9 +117,9 @@ public:
     float length();
 
     T get(unsigned int n) const throw (std::out_of_range);
-    T getX() const;
-    T getY() const;
-    T getZ() const;
+    T X() const;
+    T Y() const;
+    T Z() const;
 
     T& operator[](unsigned int n) throw (std::out_of_range);
     const T& operator[](unsigned int n) const throw (std::out_of_range);
@@ -371,12 +371,12 @@ const T& Point2<T>::operator[](unsigned int n) const throw (std::out_of_range) {
 }
 
 template <typename T>
-T Point2<T>::getX() const {
+T Point2<T>::X() const {
     return x;
 }
 
 template <typename T>
-T Point2<T>::getY() const {
+T Point2<T>::Y() const {
     return y;
 }
 
@@ -396,7 +396,7 @@ float Point2<T>::length() {
 
 template <typename U>
 std::ostream& operator<<(std::ostream& os, const Point2<U>& p) {
-    os << "[" << p.x << ", " << p.y << "]";
+    os << "[" << p.X << ", " << p.y << "]";
     return os;
 }
 
@@ -581,17 +581,17 @@ T Point3<T>::get(unsigned int n) const throw (std::out_of_range) {
 }
 
 template<typename T>
-T Point3<T>::getX() const {
+T Point3<T>::X() const {
     return x;
 }
 
 template<typename T>
-T Point3<T>::getY() const {
+T Point3<T>::Y() const {
     return y;
 }
 
 template<typename T>
-T Point3<T>::getZ() const {
+T Point3<T>::Z() const {
     return z;
 }
 
@@ -688,7 +688,7 @@ template<typename T>
 Matrix3<T>::Matrix3(int i, const Vector3<T>& v, float arg1) {
     switch(i) {
         case MATRIX_ROTATION:
-            float len = sqrt(v.getX()*v.getX() + v.getY()*v.getY() + v.getZ()*v.getZ());
+            float len = sqrt(v.X()*v.X() + v.Y()*v.Y() + v.Z()*v.Z());
             Matrix3 what(0,       -v.get(2),       v.get(1),
                          v.get(2), 0,             -v.get(0),
                         -v.get(1), v.get(0),       0);
