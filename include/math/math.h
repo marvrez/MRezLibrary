@@ -105,80 +105,43 @@ std::pair<std::complex<float>, std::complex<float> > solveQuadratic(float a, flo
     return std::make_pair(x1, x2);
 }
 
-static bool doIntersect(Vector2f&& p1, Vector2f&& q1, Vector2f&& p2, Vector2f& q2) {
-
-    //0 => colinear, 1 => clockwise, 2 => counterclockwise
-    auto direction = [](Vector2f& p, Vector2f q, Vector2f& r)  {
-        int cross = (Matrix2f(r[0]-q[0], r[1]-q[1],
-                                q[0]-p[0], q[1]-p[1])).det();
-
-        if (cross == 0) return 0;  // colinear
-        return (cross > 0) ? 1: 2; // clock or counterclock wise
-    };
-
-    // checks if point 'q' lies on line segment 'pr'
-    auto onSegment = [](Vector2f& p, Vector2f& q, Vector2f& r) {
-        return (q[0] <= std::max(p[0], r[0]) && q[0] >= std::min(p[0], r[0]) &&
-                q[1] <= std::max(p[1], r[1]) && q[1] >= std::min(p[1], r[1]));
-    };
-
-    int d1 = direction(p1, q1, p2);
-    int d2 = direction(p1, q1, q2);
-    int d3 = direction(p2, q2, p1);
-    int d4 = direction(p2, q2, q1);
-
-    // General case - if we have different orientations
-    if (d1 != d2 && d3 != d4) return true;
-
-    // Special Cases
-    // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-    if (d1 == 0 && onSegment(p1, p2, q1)) return true;
-
-    // p1, q1 and p2 are colinear and q2 lies on segment p1q1
-    if (d2 == 0 && onSegment(p1, q2, q1)) return true;
-
-    // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-    if (d3 == 0 && onSegment(p2, p1, q2)) return true;
-
-     // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-    if (d4 == 0 && onSegment(p2, q1, q2)) return true;
-
-    return false;
+static bool doIntersect(Vector2f p1, Vector2f q1, Vector2f p2, Vector2f q2) {
+    static auto det = [](const Vector2f& u, const Vector2f& v) {return u.X()*v.Y() - u.Y()*v.X();};
+    return (det(p2-p1, q1-p1)*det(p2-p1, q2-p1) < 0) && (det(q2-q1, p1-q1)*det(q2-q1, p2-q1) < 0);
 }
 
-template<typename T>
-static Point2<T> getIntersection(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T>&& q2) {
+static Vector2f getIntersection(Vector2f p1, Vector2f q1, Vector2f p2, Vector2f q2) {
     if(doIntersect(p1,q1,p2,q2)) {
-        if(B.x-A.x != 0 && D.x-C.x !=0) {
-            float a1 = (B.y-A.y)/(B.x-A.x);
-            float a2 = (D.y-C.y)/(D.x-C.x);
-            float b1 = A.y-a1*A.x;
-            float b2 = C.y-a2*C.x;
+        if(p2.X() - p1.X() != 0 && q2.X() - q1.X() != 0) {
+            float a1 = (p2.Y() - p1.Y())/(p2.X() - p1.X());
+            float a2 = (q2.Y() - q1.Y())/(q2.X() - q1.X());
+            float b1 = p1.Y() - a1*p1.X();
+            float b2 = q1.Y() - a2*q1.X();
             float Ix = (b2-b1)/(a1-a2);
             float Iy = a1*Ix+b1;
-            return sf::Vector2f(Ix,Iy);
+            return Vector2f(Ix,Iy);
         }
 
-        if(B.x-A.x == 0) {
-            float a2 = (D.y-C.y)/(D.x-C.x);
-            float b1 = A.x;
-            float b2 = C.y-a2*C.x;
+        if(p2.X() - p1.X() == 0) {
+            float a2 = (q2.Y() - q1.Y())/(q2.X() - q1.X());
+            float b1 = p1.X();
+            float b2 = q1.Y() - a2*q1.X();
             float Ix = b1;
             float Iy = a2*b1+b2;
-            return sf::Vector2f(Ix,Iy);
+            return Vector2f(Ix,Iy);
         }
 
-        if(D.x-C.x == 0) {
-            float a1 = (B.y-A.y)/(B.x-A.x);
-            float b1 = A.y-a1*A.x;
-            float b2 = C.x;
+        if(q2.X() - q1.X() == 0) {
+            float a1 = (p2.Y() - p1.Y())/(p2.X() - p1.X());
+            float b1 = p1.Y() - a1*p1.X();
+            float b2 = q1.X();
             float Ix = b2;
             float Iy = a1*b2+b1;
-            return sf::Vector2f(Ix,Iy);
+            return Vector2f(Ix,Iy);
         }
     }
 
-    return Point2<T>();
+    return Vector2f();
 }
 
 inline float gaussianFunction(float maxVal, float wideness, float x) {
