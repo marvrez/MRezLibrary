@@ -54,7 +54,7 @@ float fCos (float rad, int precision = 4) {
     return fSinCosRecurse(ret, rad, rad2, 1.0f, 1.0f, (precision << 1) + 1, 1);
 }
 
-bool fEqual(float f1, float f2, float precision = LARGE_EPSILON) {
+inline bool fEqual(float f1, float f2, float precision = LARGE_EPSILON) {
     return fabsf(f1-f2) <= precision;
 }
 
@@ -105,12 +105,11 @@ std::pair<std::complex<float>, std::complex<float> > solveQuadratic(float a, flo
     return std::make_pair(x1, x2);
 }
 
-template<typename T>
-static bool doIntersect(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T>&& q2) {
+static bool doIntersect(Vector2f&& p1, Vector2f&& q1, Vector2f&& p2, Vector2f& q2) {
 
     //0 => colinear, 1 => clockwise, 2 => counterclockwise
-    auto direction = [](Point2<T>& p, Point2<T>& q, Point2<T>& r)  {
-        int cross = (Matrix2<T>(r[0]-q[0], r[1]-q[1],
+    auto direction = [](Vector2f& p, Vector2f q, Vector2f& r)  {
+        int cross = (Matrix2f(r[0]-q[0], r[1]-q[1],
                                 q[0]-p[0], q[1]-p[1])).det();
 
         if (cross == 0) return 0;  // colinear
@@ -118,7 +117,7 @@ static bool doIntersect(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T
     };
 
     // checks if point 'q' lies on line segment 'pr'
-    auto onSegment = [](Point2<T>& p, Point2<T>& q, Point2<T>& r) {
+    auto onSegment = [](Vector2f& p, Vector2f& q, Vector2f& r) {
         return (q[0] <= std::max(p[0], r[0]) && q[0] >= std::min(p[0], r[0]) &&
                 q[1] <= std::max(p[1], r[1]) && q[1] >= std::min(p[1], r[1]));
     };
@@ -146,6 +145,50 @@ static bool doIntersect(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T
 
     return false;
 }
+
+template<typename T>
+static Point2<T> getIntersection(Point2<T>&& p1, Point2<T>&& q1, Point2<T>&& p2, Point2<T>&& q2) {
+    if(doIntersect(p1,q1,p2,q2)) {
+        if(B.x-A.x != 0 && D.x-C.x !=0) {
+            float a1 = (B.y-A.y)/(B.x-A.x);
+            float a2 = (D.y-C.y)/(D.x-C.x);
+            float b1 = A.y-a1*A.x;
+            float b2 = C.y-a2*C.x;
+            float Ix = (b2-b1)/(a1-a2);
+            float Iy = a1*Ix+b1;
+            return sf::Vector2f(Ix,Iy);
+        }
+
+        if(B.x-A.x == 0) {
+            float a2 = (D.y-C.y)/(D.x-C.x);
+            float b1 = A.x;
+            float b2 = C.y-a2*C.x;
+            float Ix = b1;
+            float Iy = a2*b1+b2;
+            return sf::Vector2f(Ix,Iy);
+        }
+
+        if(D.x-C.x == 0) {
+            float a1 = (B.y-A.y)/(B.x-A.x);
+            float b1 = A.y-a1*A.x;
+            float b2 = C.x;
+            float Ix = b2;
+            float Iy = a1*b2+b1;
+            return sf::Vector2f(Ix,Iy);
+        }
+    }
+
+    return Point2<T>();
+}
+
+inline float gaussianFunction(float maxVal, float wideness, float x) {
+    return maxVal*exp(-pow(x,2)/(2*pow(wideness,2)));
+}
+
+inline float clamp(float val, float lower, float upper) {
+    return std::max(lower, std::min(val, upper));
+}
+
 
 } //namespace Math;
 
