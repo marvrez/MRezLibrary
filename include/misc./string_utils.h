@@ -2,8 +2,28 @@
 #define STRING_UTILS_H
 
 #include <string>
+#include <sstream>
+#include <vector>
 
 namespace Str_utils {
+
+std::string str_format(const char* fmt, va_list args) {
+    char buf[8192];
+    vsnprintf(buf, 8192, fmt, args);
+    return std::string(buf);
+}
+
+std::string str_format(const char* fmt, ...) {
+    char buf[8192];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(buf, 8192, fmt, args);
+    va_end(args);
+
+    return std::string(buf);
+}
+
 
 void to_lower_case(std::string& str) {
     for (auto it = std::begin(str); it != std::end(str); it++) {
