@@ -2,7 +2,7 @@
 #define COLOR_H
 #include <string>
 
-//only works for UBUNTU/LINUX..
+//only works for unix systems
 namespace Color {
     #define RESET   "\033[0m"
     #define BLACK   "\033[30m"      /* Black */
@@ -21,7 +21,8 @@ namespace Color {
     #define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
     #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
     #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
-    auto Color(int n, const std::string& s) {
+    #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+    inline auto Color(int n, const std::string& s) {
         return "\33[38;5;" + std::to_string(n) + 'm' + s + "\33[m";
     }
 } //namespace Color
