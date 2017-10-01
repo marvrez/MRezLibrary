@@ -558,9 +558,20 @@ inline T dot(vec_t a, vec_t b) {
         result += a.data[i] * b.data[i];
     return result;
 }
-
 #undef vector_template
 #undef vec_t
+
+template<typename T>
+inline Vector<3,T> m_cross(const Vector<3,T>& a, const Vector<3,T>& b) {
+    return Vector<3,T>{a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x};
+}
+
+// Two-dimensional "cross-product" is the Z component of the cross-product between two 3D vectors where Z=0.
+// Alternatively it can be thought as the dotproduct of a vector and another vector but rotated 90 degrees.
+template<typename T>
+inline T m_cross(const Vector<2,T>& a, const Vector<2,T>& b) {
+    return a.x*b.y-a.y*b.x;
+}
 
 ///////////// Vector matrix functions /////////////
 template <int r, int c, typename T>
@@ -587,7 +598,7 @@ inline float m_length(const Vector<n, T>& v) {
 
 template <int n, typename T>
 inline Vector<n, T> m_normalize(const Vector<n,T>& v) {
-    Vector<n, T> result = v / Length(v);
+    Vector<n, T> result = v / m_length(v);
     return result;
 }
 
