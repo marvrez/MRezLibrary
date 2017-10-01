@@ -106,35 +106,35 @@ inline std::pair<std::complex<float>, std::complex<float> > solveQuadratic(float
 }
 
 inline bool doIntersect(Vector2f p1, Vector2f q1, Vector2f p2, Vector2f q2) {
-    static auto det = [](const Vector2f& u, const Vector2f& v) {return u.X()*v.Y() - u.Y()*v.X();};
+    static auto det = [](const Vector2f& u, const Vector2f& v) {return u.x*v.y - u.y*v.x;};
     return (det(p2-p1, q1-p1)*det(p2-p1, q2-p1) < 0) && (det(q2-q1, p1-q1)*det(q2-q1, p2-q1) < 0);
 }
 
 inline Vector2f getIntersection(Vector2f p1, Vector2f q1, Vector2f p2, Vector2f q2) {
     if(doIntersect(p1,q1,p2,q2)) {
-        if(p2.X() - p1.X() != 0 && q2.X() - q1.X() != 0) {
-            float a1 = (p2.Y() - p1.Y())/(p2.X() - p1.X());
-            float a2 = (q2.Y() - q1.Y())/(q2.X() - q1.X());
-            float b1 = p1.Y() - a1*p1.X();
-            float b2 = q1.Y() - a2*q1.X();
+        if(p2.x - p1.x != 0 && q2.x - q1.x != 0) {
+            float a1 = (p2.y - p1.y)/(p2.x - p1.x);
+            float a2 = (q2.y - q1.y)/(q2.x - q1.x);
+            float b1 = p1.y - a1*p1.x;
+            float b2 = q1.y - a2*q1.x;
             float Ix = (b2-b1)/(a1-a2);
             float Iy = a1*Ix+b1;
             return Vector2f(Ix,Iy);
         }
 
-        if(p2.X() - p1.X() == 0) {
-            float a2 = (q2.Y() - q1.Y())/(q2.X() - q1.X());
-            float b1 = p1.X();
-            float b2 = q1.Y() - a2*q1.X();
+        if(p2.x - p1.x == 0) {
+            float a2 = (q2.y - q1.y)/(q2.x - q1.x);
+            float b1 = p1.x;
+            float b2 = q1.y - a2*q1.x;
             float Ix = b1;
             float Iy = a2*b1+b2;
             return Vector2f(Ix,Iy);
         }
 
-        if(q2.X() - q1.X() == 0) {
-            float a1 = (p2.Y() - p1.Y())/(p2.X() - p1.X());
-            float b1 = p1.Y() - a1*p1.X();
-            float b2 = q1.X();
+        if(q2.x - q1.x == 0) {
+            float a1 = (p2.y - p1.y)/(p2.x - p1.x);
+            float b1 = p1.y - a1*p1.x;
+            float b2 = q1.x;
             float Ix = b2;
             float Iy = a1*b2+b1;
             return Vector2f(Ix,Iy);
