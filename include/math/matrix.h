@@ -531,7 +531,7 @@ Matrix<c, r, T> m_transpose(Matrix<r, c, T> m) {
 //     A*s = s*A :: s multiplied each component of A
 //     A*B = B*A :: A multiplied component-wise by B
 //     A/B       :: A divided component-wise by B
-//     dot(A, B) :: The inner product of A and B
+//     m_dot(A, B) :: The inner product of A and B
 #define vector_template template <int n, typename T>
 #define vec_t Vector<n, T>
 
@@ -552,7 +552,7 @@ vector_template vec_t& operator/=(vec_t& a, vec_t b)  { for (int i = 0; i < n; +
 vector_template vec_t& operator/=(vec_t& v, float s)  { for (int i = 0; i < n; ++i) v.data[i] /= s;         return v; }
 
 vector_template
-inline T dot(vec_t a, vec_t b) {
+inline T m_dot(vec_t a, vec_t b) {
     T result = 0;
     for (int i = 0; i < n; ++i)
         result += a.data[i] * b.data[i];
