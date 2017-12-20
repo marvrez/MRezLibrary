@@ -5,8 +5,7 @@ CONFIG -= app_bundle
 INCLUDEPATH += ./include/
 QMAKE_CXXFLAGS += -stdlib=libc++
 
-SOURCES += main.cpp \
-    include/misc./log.cpp
+SOURCES += main.cpp
 
 HEADERS += \
     include/numbers.h \

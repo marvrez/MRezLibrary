@@ -1,51 +1,52 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "color.h"
+
 #include <string>
+#include <cstdio>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <execinfo.h>
+#include <sys/timeb.h>
 
-enum class LogLevel {
-    Trace,
-    Debug,
-    Unimplemented,
-    Info,
-    Warning,
-    Error,
-};
+static struct timeb timeb_s;
+static char cda_logbuf[4096];
 
-class Logger {
-public:
-    Logger();
+#define BT_SIZE  16
+static void BACKTRACE() {
+    int num_calls;
+    void* bt_buffer[BT_SIZE];
 
-    void log(LogLevel level, const char* fmt, ...);
-    void setLevel(LogLevel level);
+    num_calls = backtrace(bt_buffer, BT_SIZE);
 
-    void enableTracing();
+    backtrace_symbols_fd(bt_buffer, num_calls, STDERR_FILENO);
+}
+#undef BT_SIZE
 
-private:
-    bool shouldLog(LogLevel level) const;
-    const char* levelColor(LogLevel level) const;
+static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
+                     __typeof__(__FILE__) 	  file,
+                     __typeof__(__LINE__)     line,
+                     __typeof__(__FUNCTION__) func,
+                     char* msgstring)
+{
+    ftime(timebp);
+    struct tm* ptm = gmtime(&timebp->time);
 
-    LogLevel currentLevel = LogLevel::Debug;
-    bool enabled = true;
-    bool tracingEnabled = false;
-};
+    fprintf (stderr,
+               (level=='I') ? GREEN_B
+             : (level=='W') ? YELLOW_B
+             : (level=='E') ? RED_B
+             : (level=='D') ? CYAN_B
+             : 				  RESET);
 
-extern Logger globalLogger;
-extern const char* COLOR_TRACE;
-extern const char* COLOR_DEBUG;
-extern const char* COLOR_UNIMPLEMENTED;
-extern const char* COLOR_INFO;
-extern const char* COLOR_WARNING;
-extern const char* COLOR_ERROR;
-extern const char* COLOR_RESET;
+    fprintf (stderr, "%1c%02d%02d %02d:%02d:%02d.%03d %05d %s:%d] %s : %s\n", level,
+             ptm->tm_mon, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
+             timebp->millitm, pid, file, line, func, msgstring);
 
-#define log_trace(fmt, ...) globalLogger.log(LogLevel::Trace, fmt, ##__VA_ARGS__);
-#define log_debug(fmt, ...) globalLogger.log(LogLevel::Debug, fmt, ##__VA_ARGS__);
-#define log_unimplemented(fmt, ...) globalLogger.log(LogLevel::Unimplemented, fmt, ##__VA_ARGS__);
-#define log_info(fmt, ...) globalLogger.log(LogLevel::Info, fmt, ##__VA_ARGS__);
-#define log_warn(fmt, ...) globalLogger.log(LogLevel::Warning, fmt, ##__VA_ARGS__);
-#define log_error(fmt, ...) globalLogger.log(LogLevel::Error, fmt, ##__VA_ARGS__);
+    fprintf (stderr, RESET);
 
-extern void logSetLevel(LogLevel level);
+}
 
 #endif
