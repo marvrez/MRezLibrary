@@ -32,8 +32,9 @@ static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
                      char* msgstring)
 {
     ftime(timebp);
-    struct tm* ptm = gmtime(&timebp->time);
+    struct tm* ptm = localtime(&timebp->time);
 
+    //Sets color to message
     fprintf (stderr,
                (level=='I') ? GREEN_B
              : (level=='W') ? YELLOW_B
@@ -41,12 +42,12 @@ static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
              : (level=='D') ? CYAN_B
              : 				  RESET);
 
-    fprintf (stderr, "%1c%02d%02d %02d:%02d:%02d.%03d %05d %s:%d] %s : %s\n", level,
-             ptm->tm_mon, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
+    //actual message formatting
+    fprintf (stderr, "[%1c%02d%02d %02d:%02d:%02d.%03d %05d %s:%d] %s : %s\n", level,
+             ptm->tm_mon+1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec,
              timebp->millitm, pid, file, line, func, msgstring);
 
     fprintf (stderr, RESET);
-
 }
 
 #endif
