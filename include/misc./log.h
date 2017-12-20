@@ -12,10 +12,10 @@
 #include <sys/timeb.h>
 
 static struct timeb timeb_s;
-static char cda_logbuf[4096];
+static char logbuffer[4096];
 
 #define BT_SIZE  16
-static void BACKTRACE() {
+static void _BACKTRACE() {
     int num_calls;
     void* bt_buffer[BT_SIZE];
 
@@ -25,7 +25,7 @@ static void BACKTRACE() {
 }
 #undef BT_SIZE
 
-static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
+static void _LOG_CORE(char level, struct timeb* timebp, pid_t pid,
                      __typeof__(__FILE__) 	  file,
                      __typeof__(__LINE__)     line,
                      __typeof__(__FUNCTION__) func,
@@ -36,10 +36,10 @@ static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
 
     //Sets color to message
     fprintf (stderr,
-               (level=='I') ? GREEN_B
-             : (level=='W') ? YELLOW_B
-             : (level=='E') ? RED_B
-             : (level=='D') ? CYAN_B
+               (level=='I') ? BOLDGREEN
+             : (level=='W') ? BOLDYELLOW
+             : (level=='E') ? BOLDRED
+             : (level=='D') ? BOLDCYAN
              : 				  RESET);
 
     //actual message formatting
@@ -49,5 +49,43 @@ static void LOG_CORE(char level, struct timeb* timebp, pid_t pid,
 
     fprintf (stderr, RESET);
 }
+
+//API
+#define LOG_DEBUG(msg) do { \
+_LOG_CORE ('D', &timeb_s, getpid(), __FILE__, __LINE__, __FUNCTION__, ((msg))); \
+} while (0)
+
+#define LOG_INFO(msg) do { \
+_LOG_CORE ('I', &timeb_s, getpid(), __FILE__, __LINE__, __FUNCTION__, ((msg))); \
+} while (0)
+
+#define LOG_WARN(msg) do { \
+_LOG_CORE ('W', &timeb_s, getpid(), __FILE__, __LINE__, __FUNCTION__, ((msg))); \
+} while (0)
+
+#define LOG_ERROR(msg) do { \
+_LOG_CORE ('E', &timeb_s, getpid(), __FILE__, __LINE__, __FUNCTION__, ((msg))); \
+_BACKTRACE(); \
+} while (0)
+
+#define LOG_DEBUGF(...) do { \
+snprintf (logbuffer, 4095, ##__VA_ARGS__); \
+LOG_DEBUG (logbuffer); \
+} while (0)
+
+#define LOG_INFOF(...) do { \
+snprintf (logbuffer, 4095, ##__VA_ARGS__); \
+LOG_INFO (logbuffer); \
+} while (0)
+
+#define LOG_WARNF(...) do { \
+snprintf (logbuffer, 4095, ##__VA_ARGS__); \
+LOG_WARN (logbuffer); \
+} while (0)
+
+#define LOG_ERRORF(...) do { \
+snprintf (logbuffer, 4095, ##__VA_ARGS__); \
+LOG_ERROR (logbuffer); \
+} while (0)
 
 #endif
