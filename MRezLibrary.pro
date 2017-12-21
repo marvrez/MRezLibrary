@@ -17,4 +17,5 @@ HEADERS += \
     include/math/math.h \
     include/misc./color.h \
     include/misc./string_utils.h \
-    include/misc./log.h
+    include/misc./log.h \
+    include/misc./rng.h
