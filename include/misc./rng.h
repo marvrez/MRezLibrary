@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <random>
+#include <string>
 
 class RNG {
 public:
@@ -26,6 +27,20 @@ public:
     inline float getFloat() { return this->fDist(this->rng); }
     inline double getDouble() { return this->dDist(this->rng); }
     inline int getInt() { return this->iDist(this->rng); }
+
+    std::string getString(std::string::size_type length = 10) {
+        static const char charset[] = "0123456789"
+                                      "abcdefghijklmnopqrstuvwxyz"
+                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        static std::uniform_int_distribution<> strIntDist(0, sizeof(charset) - 2);
+        static auto getCharacter = [=]() -> char { return charset[strIntDist(this->rng)]; };
+
+        std::string ret;
+        ret.reserve(length);
+        std::generate_n(std::back_inserter(ret), length, getCharacter);
+
+        return ret;
+    }
 
     void setIntRange(int lower, int upper) { this->iDist = std::uniform_int_distribution<int>(lower,upper); }
     void setFloatRange(float lower, float upper) { this->fDist = std::uniform_real_distribution<float>(lower,upper); }
