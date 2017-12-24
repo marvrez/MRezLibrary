@@ -17,6 +17,21 @@ constexpr int MONTHS_PER_YEAR = 12;
 constexpr int HOURS_PER_DAY = 24;
 constexpr int MINUTES_PER_HOUR = 60;
 
+
+//TODO: maybe there is a more "elegant" way to do this in C++11?
+#define MEASURE_TIME(a) \
+    do { \
+    double start = getCurrentTime(); \
+    a; \
+    printf("%s took: %f seconds\n", #a, getCurrentTime() - start); \
+    } while (0)
+
+double getCurrentTime() {
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return now.tv_sec + now.tv_nsec*1e-9;
+}
+
 namespace humanize {
 enum SuffixType {SHORT, LONG};
 static const char* shortSuffixes[6] = {

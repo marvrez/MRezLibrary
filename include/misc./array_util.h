@@ -21,7 +21,7 @@ void shuffle(Iterator begin, Iterator end, Generator& gen) {
 }
 
 float sum_array(float* a, int n) {
-    float sum;
+    float sum = 0;
     for(int i = 0; i < n; ++i) sum += a[i];
     return sum;
 }

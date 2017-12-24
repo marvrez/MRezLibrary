@@ -44,7 +44,7 @@ inline void remove_spaces(std::string& str) {
 
 inline void trim_left(std::string& str) {
     int trim_count = 0;
-    for (int i = 0; i < str.length(); ++i) {
+    for (size_t i = 0; i < str.length(); ++i) {
         if (isspace(str[i])) trim_count++;
         else if (!isspace(str[i])) break;
     }

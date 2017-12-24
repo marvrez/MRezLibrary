@@ -9,7 +9,6 @@
 
 namespace Math {
 //Defines
-#define M_PI            3.1415926535897932384626433832795f
 #define M_RAD(val)        ((val)*0.0174532925199432957692369076848f)
 #define M_DEG(val)        ((val)*57.295779513082320876798154814105f)
 #define M_LARGE_EPSILON   1e-2f
@@ -17,7 +16,6 @@ namespace Math {
 #define M_TINY_EPSILON    1e-5f
 #define M_INFINITE      3.4e38f
 #define M_EULER_NUMBER  2.71828182845904523536f
-#define M_SQRT2         1.4142135623730950488016887242097f
 #define M_SQRT3         1.7320508075688772935274463415059f
 
 //(kinda optimized) math functions
@@ -161,8 +159,6 @@ inline float fastInvSqrt(float x) {
     x = x*(1.5f-(xhalf*x*x));   // One round of Newton-Raphson's method
     return x;
 }
-
-
 
 } //namespace Math;
 
