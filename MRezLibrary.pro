@@ -1,6 +1,8 @@
 TEMPLATE = app
 CONFIG += c++14
 CONFIG -= app_bundle
+QMAKE_CXXFLAGS += -O3
+QMAKE_CFLAGS_RELEASE    = -O3
 
 INCLUDEPATH += ./include/
 QMAKE_CXXFLAGS += -stdlib=libc++
@@ -20,3 +22,4 @@ HEADERS += \
     include/misc./log.h \
     include/misc./rng.h \
     include/misc./array_util.h \
+    include/misc./monte_carlo.h
