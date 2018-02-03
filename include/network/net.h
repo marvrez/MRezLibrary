@@ -61,6 +61,48 @@ private:
 };
 
 UDPSocket::UDPSocket(address_t addr, bool non_blocking) : socket_(addr), is_blocking_(!non_blocking) {
+#ifdef _WIN32
+    WSADATA WsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &WsaData) != NO_ERROR) {
+        // Windows failure
+        assert(false);
+    }
+
+    socket_status_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (socket_status_ <= 0) {
+        // Failed to create socket
+        UDP_ASSERT(false);
+    }
+
+    // Bind socket to a port
+    sockaddr_in address;
+    address.sin_family = AF_INET;
+    if (addr.ip0 == 0 &&
+        addr.ip1 == 0 &&
+        addr.ip2 == 0 &&
+        addr.ip3 == 0)
+        address.sin_addr.s_addr = INADDR_ANY;
+    else
+        address.sin_addr.s_addr = htonl(
+        (addr.ip0 << 24) |
+        (addr.ip1 << 16) |
+        (addr.ip2 <<  8) |
+        (addr.ip3));
+    address.sin_port = htons(addr.port);
+    if (bind(socket_status_, (const sockaddr*)&address, sizeof(sockaddr_in)) < 0) {
+        // Failed to bind socket (maybe port was taken?)
+        assert(false);
+    }
+
+    if (non_blocking) {
+        // Set port to not block when calling recvfrom
+        DWORD non_blocking = 1;
+        if (ioctlsocket(socket_status_, FIONBIO, &non_blocking) != 0) {
+            // Failed to set port to non-blocking
+            assert(false);
+        }
+    }
+#else
     socket_status_ = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_status_ < 0) {
         // Failed to open socket
@@ -94,6 +136,7 @@ UDPSocket::UDPSocket(address_t addr, bool non_blocking) : socket_(addr), is_bloc
             assert(false);
         }
     }
+#endif
 }
 
 UDPSocket::UDPSocket(uint16_t port, bool non_blocking)
