@@ -150,5 +150,29 @@ UDPSocket::~UDPSocket() {
 #endif
 }
 
+int UDPSocket::receive(void *data, size_t size, address_t *src) {
+
+}
+
+int UDPSocket::send(const void* data, size_t size, address_t dst) {
+    // Socket not initialized
+    if (!socket_status_) {
+        assert(false);
+    }
+
+    sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(
+        (dst.ip0 << 24) |
+        (dst.ip1 << 16) |
+        (dst.ip2 <<  8) |
+        (dst.ip3));
+    address.sin_port = htons(dst.port);
+
+    int bytes_sent = sendto(socket_status_, data, size,
+                            0, (sockaddr*)&address, sizeof(sockaddr_in));
+    return bytes_sent;
+}
+
 #endif // NET_H
 
