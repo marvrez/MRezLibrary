@@ -87,7 +87,7 @@ UDPSocket::UDPSocket(address_t addr, bool non_blocking) : socket_(addr), is_bloc
         (addr.ip0 << 24) |
         (addr.ip1 << 16) |
         (addr.ip2 <<  8) |
-        (addr.ip3));
+        (addr.ip3 <<  0));
     address.sin_port = htons(addr.port);
     if (bind(socket_status_, (const sockaddr*)&address, sizeof(sockaddr_in)) < 0) {
         // Failed to bind socket (maybe port was taken?)
@@ -121,7 +121,7 @@ UDPSocket::UDPSocket(address_t addr, bool non_blocking) : socket_(addr), is_bloc
         (addr.ip0 << 24) |
         (addr.ip1 << 16) |
         (addr.ip2 <<  8) |
-        (addr.ip3));
+        (addr.ip3 <<  0));
     address.sin_port = htons(addr.port);
 
     if (bind(socket_status_, (sockaddr*)&address, sizeof(address)) < 0) {
@@ -150,8 +150,34 @@ UDPSocket::~UDPSocket() {
 #endif
 }
 
-int UDPSocket::receive(void *data, size_t size, address_t *src) {
+int UDPSocket::receive(void* data, size_t size, address_t* src) {
+    // Socket not initialized
+    if (!socket_status_) {
+        assert(false);
+    }
 
+    sockaddr_in from;
+    socklen_t from_length = sizeof(from);
+
+#ifdef _WIN32
+    int bytes_read = recvfrom(socket_status_, (char*)data, size, 0,
+                              (sockaddr*) &from, &from_length);
+#else
+    int bytes_read = recvfrom(socket_status_, data, size, 0,
+                              (sockaddr*) &from, &from_length);
+#endif
+    if (bytes_read <= 0) return 0;
+
+    uint32_t from_address = ntohl(from.sin_addr.s_addr);
+    if (src) {
+        src->ip0  = (from_address >> 24) & 0xFF;
+        src->ip1  = (from_address >> 16) & 0xFF;
+        src->ip2  = (from_address >>  8) & 0xFF;
+        src->ip3  = (from_address >>  0) & 0xFF;
+        src->port = ntohs(from.sin_port);
+    }
+
+    return bytes_read;
 }
 
 int UDPSocket::send(const void* data, size_t size, address_t dst) {
@@ -166,11 +192,16 @@ int UDPSocket::send(const void* data, size_t size, address_t dst) {
         (dst.ip0 << 24) |
         (dst.ip1 << 16) |
         (dst.ip2 <<  8) |
-        (dst.ip3));
+        (dst.ip3 <<  0));
     address.sin_port = htons(dst.port);
 
+#ifdef _WIN32
+    int bytes_sent = sendto(socket_status_, (char*)data, size,
+                            0, (sockaddr*)&address, sizeof(sockaddr_in));
+#else
     int bytes_sent = sendto(socket_status_, data, size,
                             0, (sockaddr*)&address, sizeof(sockaddr_in));
+#endif
     return bytes_sent;
 }
 
