@@ -22,4 +22,5 @@ HEADERS += \
     include/misc./log.h \
     include/misc./rng.h \
     include/misc./array_util.h \
-    include/misc./monte_carlo.h
+    include/misc./monte_carlo.h \
+    include/network/net.h

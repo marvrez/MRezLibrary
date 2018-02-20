@@ -18,13 +18,22 @@
 #include <fcntl.h>
 #endif
 
-struct address_t {
+constexpr int NET_MAX_ADDR = 68;
+
+struct Address {
+    enum class Type : uint8_t {
+        IPv4,
+        IPv6,
+        count,
+    };
     // represents full IP-address: ip0.ip1.ip2.ip3
     union {
-        uint8_t ip0, ip1, ip2, ip3;
-        uint8_t ip[4];
+        uint32_t ipv4;
+        char ipv6[16];
     };
     uint16_t port;
+    uint32_t scope_id;
+    Type type;
 };
 
 class UDPSocket {
@@ -35,8 +44,8 @@ public:
     // (use 0 to select a random open port)
     //
     // Socket will not block if 'non-blocking' is non-zero
-    UDPSocket(address_t addr, bool non_blocking);
-    UDPSocket(uint16_t port, bool non_blocking);
+    UDPSocket(Address address, bool non_blocking, int address_family);
+    UDPSocket(uint16_t port, bool non_blocking, int address_family);
 
     //Closes the opened socket
     ~UDPSocket();
@@ -44,103 +53,105 @@ public:
     // Receives a specific amount of data from 'src'
     // If src is not null, src will contain its address and port.
     // Returns the number of bytes received
-    int receive(void* data, size_t size, address_t* src);
+    int receive(void* data, size_t size, Address* src);
 
     // Sends a specific amount of data to 'dst'
     // Returns number of bytes sent.
-    int send(const void* data, size_t size, address_t dst);
+    int send(const void* data, size_t size, Address dst);
 
 
-    address_t getSocket() const { return socket_; }
+    Address getSocket() const { return socket_; }
 
 private:
-    address_t socket_;
+    Address socket_;
 
-    bool is_blocking_  = 0;
-    int socket_status_ = 0;
+    bool is_blocking_  = false;
+    uint64_t socket_handle_ = 0;
 };
 
-UDPSocket::UDPSocket(address_t addr, bool non_blocking) : socket_(addr), is_blocking_(!non_blocking) {
+UDPSocket::UDPSocket(Address address, bool non_blocking, int address_family) : socket_(address), is_blocking_(!non_blocking) {
 #ifdef _WIN32
-    WSADATA WsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &WsaData) != NO_ERROR) {
+    WSADATA wsa_data;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR) {
         // Windows failure
+        printf("Windows Sockets failedto start");
         assert(false);
-    }
-
-    socket_status_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (socket_status_ <= 0) {
-        // Failed to create socket
-        UDP_ASSERT(false);
-    }
-
-    // Bind socket to a port
-    sockaddr_in address;
-    address.sin_family = AF_INET;
-    if (addr.ip0 == 0 &&
-        addr.ip1 == 0 &&
-        addr.ip2 == 0 &&
-        addr.ip3 == 0)
-        address.sin_addr.s_addr = INADDR_ANY;
-    else
-        address.sin_addr.s_addr = htonl(
-        (addr.ip0 << 24) |
-        (addr.ip1 << 16) |
-        (addr.ip2 <<  8) |
-        (addr.ip3 <<  0));
-    address.sin_port = htons(addr.port);
-    if (bind(socket_status_, (const sockaddr*)&address, sizeof(sockaddr_in)) < 0) {
-        // Failed to bind socket (maybe port was taken?)
-        assert(false);
-    }
-
-    if (non_blocking) {
-        // Set port to not block when calling recvfrom
-        DWORD non_blocking = 1;
-        if (ioctlsocket(socket_status_, FIONBIO, &non_blocking) != 0) {
-            // Failed to set port to non-blocking
-            assert(false);
-        }
-    }
-#else
-    socket_status_ = socket(AF_INET, SOCK_DGRAM, 0);
-    if (socket_status_ < 0) {
-        // Failed to open socket
-        assert(false);
-    }
-
-    sockaddr_in address = {};
-    address.sin_family = AF_INET;
-    if (addr.ip0 == 0 &&
-        addr.ip1 == 0 &&
-        addr.ip2 == 0 &&
-        addr.ip3 == 0)
-        address.sin_addr.s_addr = INADDR_ANY;
-    else
-        address.sin_addr.s_addr = htonl(
-        (addr.ip0 << 24) |
-        (addr.ip1 << 16) |
-        (addr.ip2 <<  8) |
-        (addr.ip3 <<  0));
-    address.sin_port = htons(addr.port);
-
-    if (bind(socket_status_, (sockaddr*)&address, sizeof(address)) < 0) {
-        // Failed to bind socket
-        assert(false);
-    }
-
-    if (non_blocking) {
-        int opt = 1;
-        if (ioctl(socket_status_, FIONBIO, &opt) == -1) {
-            // Failed to set socket to non-blocking
-            assert(false);
-        }
     }
 #endif
+
+    socket_handle_ = socket(address_family, SOCK_DGRAM, IPPROTO_UDP);
+    if (socket_handle_ <= 0) {
+        // Failed to create socket
+        printf("Failed to create socket");
+        assert(false);
+    }
+
+    // Bind socket to the port
+    {
+        addrinfo hints;
+        memset(&hints, 0, sizeof(addrinfo));
+        hints.ai_family = address_family;
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
+        hints.ai_protocol = IPPROTO_UDP;
+
+        addrinfo* addr_list;
+
+        char port_str[8] = {};
+        sprintf(port_str, "%hu", address.port);
+        if (getaddrinfo(nullptr, port_str, &hints, &addr_list) || !addr_list) {
+            printf("getaddrinfo failed\n");
+            assert(false);
+        }
+        {
+            char buffer[NET_MAX_ADDR];
+            uint16_t port;
+            if (address_family == AF_INET) {
+                sockaddr_in* addr = (sockaddr_in*)(addr_list->ai_addr);
+                port = addr->sin_port;
+                inet_ntop(AF_INET, &addr->sin_addr, buffer, NET_MAX_ADDR);
+            }
+            else { // ipv6
+                sockaddr_in6* addr = (sockaddr_in6*)(addr_list->ai_addr);
+                port = addr->sin6_port;
+                inet_ntop(AF_INET6, &addr->sin6_addr, buffer, NET_MAX_ADDR);
+            }
+            printf("Binding to [%s]:%hu...\n", buffer, ntohs(port));
+        }
+
+        if (bind(socket_handle_, addr_list->ai_addr, int32_t(addr_list->ai_addrlen))) {
+            printf("Bind failed\n");
+            assert(false);
+        }
+        else
+            printf("%s\n", "Bind succeeded.");
+
+        freeaddrinfo(addr_list);
+    }
+
+
+    if (non_blocking) {
+#ifdef _WIN32
+        // Set port to not block when calling recv
+        DWORD non_blocking = 1;
+        if (ioctlsocket(socket_handle_, FIONBIO, &non_blocking) != 0) {
+            // Failed to set port to non-blocking
+            printf(""Failed to set socket to non-blocking\n");
+            assert(false);
+        }
+#else
+        int opt = 1;
+        if (ioctl(socket_handle_, FIONBIO, &opt) == -1) {
+            // Failed to set socket to non-blocking
+            printf("Failed to set socket to non-blocking\n");
+            assert(false);
+        }
+#endif
+    }
 }
 
-UDPSocket::UDPSocket(uint16_t port, bool non_blocking)
-    : UDPSocket({{0}, port}, non_blocking)
+UDPSocket::UDPSocket(uint16_t port, bool non_blocking, int address_family)
+    : UDPSocket({{0}, port, 0, Address::Type::count}, non_blocking, address_family)
 {
 }
 
@@ -150,59 +161,90 @@ UDPSocket::~UDPSocket() {
 #endif
 }
 
-int UDPSocket::receive(void* data, size_t size, address_t* src) {
-    // Socket not initialized
-    if (!socket_status_) {
-        assert(false);
-    }
-
-    sockaddr_in from;
-    socklen_t from_length = sizeof(from);
-
+int UDPSocket::receive(void* data, size_t size, Address* src) {
 #ifdef _WIN32
-    int bytes_read = recvfrom(socket_status_, (char*)data, size, 0,
-                              (sockaddr*) &from, &from_length);
-#else
-    int bytes_read = recvfrom(socket_status_, data, size, 0,
-                              (sockaddr*) &from, &from_length);
+    typedef int32_t socklen_t;
 #endif
-    if (bytes_read <= 0) return 0;
 
-    uint32_t from_address = ntohl(from.sin_addr.s_addr);
-    if (src) {
-        src->ip0  = (from_address >> 24) & 0xFF;
-        src->ip1  = (from_address >> 16) & 0xFF;
-        src->ip2  = (from_address >>  8) & 0xFF;
-        src->ip3  = (from_address >>  0) & 0xFF;
-        src->port = ntohs(from.sin_port);
+    sockaddr_storage from;
+    socklen_t from_length = sizeof(sockaddr_storage);
+
+    int32_t received_bytes = 0;
+    if (socket_handle_)
+        received_bytes = recvfrom(socket_handle_, (char*)data, size, 0,
+                                  (sockaddr*)&from, &from_length);
+
+    //still not received anything, check if ipv6 address has something
+    if (received_bytes <= 0) {
+        if (socket_handle_) {
+            received_bytes = recvfrom(socket_handle_, (char*)data, size, 0,
+                                      (sockaddr*)&from, &from_length);
+            if (received_bytes <= 0) return 0;
+        }
+        else return 0;
     }
 
-    return bytes_read;
+    if(src) {
+        if (from.ss_family == AF_INET6) {
+            src->type = Address::Type::IPv6;
+            const sockaddr_in6* ipv6 = (const sockaddr_in6*)(&from);
+            memcpy(src->ipv6, &ipv6->sin6_addr, sizeof(ipv6->sin6_addr));
+            src->scope_id = ipv6->sin6_scope_id;
+            src->port = ipv6->sin6_port;
+        }
+        else {
+            src->type = Address::Type::IPv4;
+            const sockaddr_in* ipv4 = (const sockaddr_in*)(&from);
+            src->ipv4 = ipv4->sin_addr.s_addr;
+            src->scope_id = 0;
+            src->port = ipv4->sin_port;
+        }
+    }
+
+    return received_bytes;
 }
 
-int UDPSocket::send(const void* data, size_t size, address_t dst) {
-    // Socket not initialized
-    if (!socket_status_) {
-        assert(false);
+int UDPSocket::send(const void* data, size_t size, Address dst) {
+    sockaddr_storage address;
+    memset(&address, 0, sizeof(address));
+    size_t addr_length = 0;
+    switch (dst.type) {
+        case Address::Type::IPv4:
+        {
+            sockaddr_in* ipv4 = (sockaddr_in*)(&address);
+            ipv4->sin_family = AF_INET;
+            ipv4->sin_port = dst.port;
+            ipv4->sin_addr.s_addr = dst.ipv4;
+            addr_length = sizeof(sockaddr_in);
+            break;
+        }
+        case Address::Type::IPv6:
+        {
+            sockaddr_in6* ipv6 = (sockaddr_in6*)(&address);
+            ipv6->sin6_family = AF_INET6;
+            ipv6->sin6_port = dst.port;
+            ipv6->sin6_scope_id = dst.scope_id;
+            memcpy(&ipv6->sin6_addr, &dst.ipv6, sizeof(ipv6->sin6_addr));
+            addr_length = sizeof(sockaddr_in6);
+            break;
+        }
+        default:
+            return 0;
+            break;
     }
 
-    sockaddr_in address;
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(
-        (dst.ip0 << 24) |
-        (dst.ip1 << 16) |
-        (dst.ip2 <<  8) |
-        (dst.ip3 <<  0));
-    address.sin_port = htons(dst.port);
+    size_t sent_bytes = 0;
+    // do we actually have a socket open for the desired protocol?
+    if (socket_handle_) {
+        sent_bytes = sendto(socket_handle_, (const char*)data, size, 0,
+                                    (const sockaddr*)&address, int32_t(addr_length));
+        if (sent_bytes != size) {
+            printf("Failed to send data\n");
+            return 0;
+        }
+    }
 
-#ifdef _WIN32
-    int bytes_sent = sendto(socket_status_, (char*)data, size,
-                            0, (sockaddr*)&address, sizeof(sockaddr_in));
-#else
-    int bytes_sent = sendto(socket_status_, data, size,
-                            0, (sockaddr*)&address, sizeof(sockaddr_in));
-#endif
-    return bytes_sent;
+    return sent_bytes;
 }
 
 #endif // NET_H

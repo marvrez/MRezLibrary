@@ -28,6 +28,8 @@ public:
     inline double getDouble() { return this->dDist(this->rng); }
     inline int getInt() { return this->iDist(this->rng); }
 
+    inline std::mt19937 getGenerator() const { return this->rng; }
+
     std::string getString(std::string::size_type length = 10) {
         static const char charset[] = "0123456789"
                                       "abcdefghijklmnopqrstuvwxyz"
