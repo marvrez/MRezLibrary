@@ -1,15 +1,21 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "color.h"
-
-#include <string>
-#include <cstdio>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <execinfo.h>
 #include <sys/timeb.h>
+
+#define RESET   ((const char*)"\033[0m")
+#define BOLDBLACK   ((const char*)"\033[1m\033[30m")      /* Bold Black */
+#define BOLDRED     ((const char*)"\033[1m\033[31m")      /* Bold Red */
+#define BOLDGREEN   ((const char*)"\033[1m\033[32m")      /* Bold Green */
+#define BOLDYELLOW  ((const char*)"\033[1m\033[33m")      /* Bold Yellow */
+#define BOLDBLUE    ((const char*)"\033[1m\033[34m")      /* Bold Blue */
+#define BOLDMAGENTA ((const char*)"\033[1m\033[35m")      /* Bold Magenta */
+#define BOLDCYAN    ((const char*)"\033[1m\033[36m")      /* Bold Cyan */
+#define BOLDWHITE   ((const char*)"\033[1m\033[37m")      /* Bold White */
 
 static struct timeb timeb_s;
 static char logbuffer[4096];
