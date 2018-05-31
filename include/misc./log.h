@@ -2,6 +2,8 @@
 #define LOG_H
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <execinfo.h>
