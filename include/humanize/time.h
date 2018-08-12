@@ -3,7 +3,10 @@
 
 #include <string>
 #include <cmath>
+#include <ctime>
 #include <chrono>
+#include <sstream>
+#include <iomanip>
 
 //constants
 constexpr int SECONDS_PER_YEAR = 31536000;
@@ -225,6 +228,25 @@ std::string diffTime(const Duration& duration, SuffixType sType = SuffixType::LO
     auto t1 = std::chrono::time_point_cast<Duration>(Clock::now());
     auto t2 = t1 + duration;
     return diffTime(t1, t2, sType, maxPoints);
+}
+
+template <typename Clock>
+std::string toIso(const std::chrono::time_point<Clock>& now)
+{
+    std::stringstream ss;
+    time_t tt = std::chrono::system_clock::to_time_t(now);
+    tm localTimeInfo = *localtime(&tt);
+
+    static const char* fmt = "%Y-%m-%d %H:%M:%S";
+    constexpr MAX_BUF_SIZE = 32;
+    char buf[MAX_BUF_SIZE];
+    strftime(buf, MAX_BUF_SIZE, fmt, &localTimeInfo);
+
+    std::string timeString(buf);
+    std::chrono::time_point<Clock, std::chrono::milliseconds> ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    ss << buf << '.' << std::setfill('0') << std::setw(3) << (ms.time_since_epoch().count() % 1e3);
+
+    return ss.str();
 }
 
 } //namespace time
