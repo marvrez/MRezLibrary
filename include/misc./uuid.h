@@ -4,8 +4,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-//30, 29, 22, 21,  14, 13
-
 // Need this helper function because RAND_MAX isn't guaranteed to be > 0x7FFFFFFF
 inline uint32_t rand32() {
 	const uint32_t r1 = rand() & 0xff;
@@ -25,10 +23,10 @@ public:
             (rand32() & 0xffff0fff) | c[rand32() & 0x03],
             (rand32() & 0xffffffff)
         };
-        uint32_t rand_val;
+        uint32_t rand_val, i;
 
         UUID uuid;
-        for(unsigned int i = 0; i < 16; i += 4) {
+        for(i = 0; i < 16; i += 4) {
             rand_val = rand_vals[i >> 2];
             uuid.bytes_[i]   = (rand_val >> 24) & 0xff;
             uuid.bytes_[i+1] = (rand_val >> 16) & 0xff;
