@@ -16,11 +16,11 @@ inline uint32_t rand32() {
 class UUID {
 public:
     static UUID generate() {
-        static const uint16_t c[] = { 0x8000, 0x9000, 0xa000, 0xb000 };
+        static const uint32_t c[] = { 0x80000000, 0x90000000, 0xa0000000, 0xb0000000 };
         uint32_t rand_vals[4] =  {
             (rand32() & 0xffffffff),
             (rand32() & 0xffff0fff) | 0x4000,
-            (rand32() & 0xffff0fff) | c[rand32() & 0x03],
+            (rand32() & 0x0fffffff) | c[rand() & 0x03],
             (rand32() & 0xffffffff)
         };
         uint32_t rand_val, i;
